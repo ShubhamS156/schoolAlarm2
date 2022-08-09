@@ -155,6 +155,7 @@ void keyPressTask(void *pvParameters){
         }
       }
     }
+    delay(300); //delay between checking for keyPress
   }
 }
 /*--------------------freertos tasks--------------------*/
@@ -170,7 +171,7 @@ void setup() {
     ESP_LOGE(TAG,"Could not create mutex for lcdMutex");
     //TODO: how to heal this if occurs?
   }
-
+  xTaskCreate(keyPressTask,"keyPress",4096,NULL,3,NULL);
 
 }
 
