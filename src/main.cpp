@@ -33,7 +33,7 @@
 #define ENT 16
 
 /*-------------object init-------------*/
-LiquidCrystal_I2C lcd(0x23,20,4);
+LiquidCrystal_I2C lcd(0x27,20,4);
 TTP229 ttp229;
 MenuManager obj(sampleMenu_Root,menuCount(sampleMenu_Root));
 
@@ -163,6 +163,7 @@ void keyPressTask(void *pvParameters){
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Starting");
   lcd.begin();
   ttp229.begin(TTP229_SCL,TTP229_SDO);
   attachInterrupt(digitalPinToInterrupt(TTP229_SDO),keyChange,RISING);
