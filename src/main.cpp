@@ -165,7 +165,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
   lcd.begin();
-  Wire.begin();
+  lcd.backlight();
+  lcd.print("Hello World");
   ttp229.begin(TTP229_SCL,TTP229_SDO);
   attachInterrupt(digitalPinToInterrupt(TTP229_SDO),keyChange,RISING);
   lcdMutex = xSemaphoreCreateMutex();
