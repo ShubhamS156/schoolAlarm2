@@ -33,7 +33,7 @@
 #define ENT 16
 
 /*-------------object init-------------*/
-LiquidCrystal_I2C lcd(0x27,20,4);
+LiquidCrystal_I2C lcd(0x23,20,4);
 TTP229 ttp229;
 MenuManager obj(sampleMenu_Root,menuCount(sampleMenu_Root));
 
@@ -172,7 +172,6 @@ void setup() {
     //TODO: how to heal this if occurs?
   }
   xTaskCreate(keyPressTask,"keyPress",4096,NULL,3,NULL);
-
 }
 
 void loop() {
