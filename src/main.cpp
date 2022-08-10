@@ -169,7 +169,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(TTP229_SDO),keyChange,RISING);
   lcdMutex = xSemaphoreCreateMutex();
   if(lcdMutex == NULL){
-    ESP_LOGE(TAG,"Could not create mutex for lcdMutex");
+    Serial.println("Could not create mutex for lcdMutex");
     //TODO: how to heal this if occurs?
   }
   xTaskCreate(keyPressTask,"keyPress",4096,NULL,3,NULL);
