@@ -7,7 +7,7 @@
 #include <esp_system.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-
+#include <Wire.h>
 
 #define TTP229_SDO 25
 #define TTP229_SCL 26
@@ -165,6 +165,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
   lcd.begin();
+  Wire.begin();
   ttp229.begin(TTP229_SCL,TTP229_SDO);
   attachInterrupt(digitalPinToInterrupt(TTP229_SDO),keyChange,RISING);
   lcdMutex = xSemaphoreCreateMutex();
