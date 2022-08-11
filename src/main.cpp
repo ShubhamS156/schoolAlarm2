@@ -92,6 +92,7 @@ void keyPressTask(void *pvParameters){
       keyPressed = ttp229.GetKey16();
       if(keyPressed != RELEASE){
         actionKey = keyPressed;
+        Serial.printf("key-pressed=%d",actionKey);
       }
       else{
         if(actionKey != -1){
