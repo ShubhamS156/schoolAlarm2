@@ -180,7 +180,7 @@ void setup() {
     Serial.println("Mutex Created");
   }
   xTaskCreate(keyPressTask,"keyPress",4096,NULL,3,NULL);
-  loopFlag = mnuCmdHome;
+  currentItem = mnuCmdHome;
 }
 
 void loop() {
