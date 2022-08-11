@@ -17,3 +17,4 @@ keyPressTask will only be allowed to change currentMode.
 keyPressTask will handle navigations for everything. Different meaning for keys will be infered by checking for  the currentMode.
 if using keyPressTask only for nav and infered meaning of keys, will have to declare all the variables used in the task, will have to make some of them static , but waste of mem, as they wouldnt be needed after exiting say a particular mode.
 
+loopFlag vs currentItem

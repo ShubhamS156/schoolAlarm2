@@ -83,6 +83,7 @@ void keyChange() {
 
 /*------------tasks----------------------*/
 void keyPressTask(void *pvParameters){
+  Serial.println("Starting KeyPress Detection");
   int currId;
   int actionKey = -1; //undefined, used to check which key is pressed.
   int keyPressed = 0; //released 
@@ -130,7 +131,7 @@ void keyPressTask(void *pvParameters){
             switch(currentItem){
               case mnuCmdHome:
                 Serial.println("entering home");
-                loopFlag = mnuCmdHome;
+                //loopFlag = mnuCmdHome;
                 break;
               case mnuCmdManual:
                 lcd.clear();
@@ -155,8 +156,9 @@ void keyPressTask(void *pvParameters){
         }
       }
     }
-    delay(300); //delay between checking for keyPress
+    vTaskDelay(300/portTICK_PERIOD_MS);
   }
+  vTaskDelete(NULL);
 }
 /*--------------------freertos tasks--------------------*/
 
@@ -166,7 +168,6 @@ void setup() {
   Serial.println("Starting");
   lcd.begin();
   lcd.backlight();
-  lcd.print("Hello World");
   ttp229.begin(TTP229_SCL,TTP229_SDO);
   attachInterrupt(digitalPinToInterrupt(TTP229_SDO),keyChange,RISING);
   lcdMutex = xSemaphoreCreateMutex();
@@ -174,11 +175,15 @@ void setup() {
     Serial.println("Could not create mutex for lcdMutex");
     //TODO: how to heal this if occurs?
   }
+  else{
+    Serial.println("Mutex Created");
+  }
   xTaskCreate(keyPressTask,"keyPress",4096,NULL,3,NULL);
+  loopFlag = mnuCmdHome;
 }
 
 void loop() {
-  switch(loopFlag){
+  switch(currentItem){
     case mnuCmdHome:
       //replace this by writer functions.
       xSemaphoreTake(lcdMutex,portMAX_DELAY);
