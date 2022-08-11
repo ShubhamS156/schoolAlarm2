@@ -90,9 +90,9 @@ void keyPressTask(void *pvParameters){
   while(1){
     if(ttp229.keyChange){
       keyPressed = ttp229.GetKey16();
-      Serial.printf("key-pressed=%d",actionKey);
       if(keyPressed != RELEASE){
         actionKey = keyPressed;
+        Serial.printf("key-pressed=%d\n",actionKey);
       }
       else{
         if(actionKey != -1){
@@ -161,6 +161,7 @@ void keyPressTask(void *pvParameters){
             switch(currentItem){
               case mnuCmdHome:
                 lcd.clear();
+                currentItem = mnuCmdManual;
                 printSelected();
               default:
                 break;
