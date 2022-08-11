@@ -100,6 +100,8 @@ void keyPressTask(void *pvParameters){
           if(actionKey == UP){
             Serial.println("UP pressed");
             switch(currentItem){ //TODO: add cases to this block to add meaning to UP
+              case mnuCmdHome:
+                break;
               default:
                 //if there is item to move to
                 if(obj.moveToPreviousItem()){
@@ -115,6 +117,8 @@ void keyPressTask(void *pvParameters){
           }
           else if(actionKey == DOWN){
             switch(currentItem){ //TODO: add case here for key DOWN.
+              case mnuCmdHome:
+                break;
               default:
                 if(obj.moveToNextItem()){
                   currentItem = obj.getCurrentItemCmdId();
@@ -150,6 +154,15 @@ void keyPressTask(void *pvParameters){
                   lcd.clear();
                   printSelected();
                 }
+                break;
+            }
+          }
+          else if(actionKey == BACK){
+            switch(currentItem){
+              case mnuCmdHome:
+                lcd.clear();
+                printSelected();
+              default:
                 break;
             }
           }
