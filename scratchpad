@@ -30,3 +30,4 @@ every mode will have its own handler, which will take care of writing and cleari
 
 ->on pressing back, i think currently it is going to the root of the parent menu, instead make it go to the menu item from where it entered the child menu
 -? figure out a way to start homescreen by default
+-> goto homescreen after mode select

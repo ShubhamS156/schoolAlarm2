@@ -347,14 +347,17 @@ void keyPressTask(void *pvParameters) {
               case mnuCmdSummer:
                 currentMode = SUMMER;
                 Serial.println("Mode=SUMMER");
+                handleHome();
                 break;
               case mnuCmdWinter:
                 currentMode = WINTER;
                 Serial.println("Mode=WINTER");
+                handleHome();
                 break;
               case mnuCmdExam:
                 currentMode = EXAM;
                 Serial.println("Mode=EXAM");
+                handleHome();
                 break;
               case mnuCmdOFF:
                 currentMode = UNDEFINED;
