@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <DFRobotDFPlayerMini.h>
 #include <LiquidCrystal_I2C.h>
 #include <MenuData.h>
 #include <MenuManager.h>
@@ -8,7 +9,6 @@
 #include <esp_system.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-
 #define TTP229_SDO 25
 #define TTP229_SCL 26
 #define countof(a) (sizeof(a) / sizeof(a[0]))
@@ -37,6 +37,8 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 TTP229 ttp229;
 MenuManager obj(sampleMenu_Root, menuCount(sampleMenu_Root));
 RtcDS3231<TwoWire> rtc(Wire);
+DFRobotDFPlayerMini myDFPlayer;
+HardwareSerial mySoftwareSerial(2);
 /*--------------var init---------------*/
 byte verticalLine[8] = {B00100, B00100, B00100, B00100,
                         B00100, B00100, B00100, B00100};
@@ -226,6 +228,77 @@ void handleHome() {
   lcd.clear();
   printSelected();
 }
+void handleManualMode() {
+  lcd.clear();
+  lcd.blink_off();
+  String msg = "FILE=x";
+  String counter = "";
+  int cnt = 0;
+  int fileCount = myDFPlayer.readFileCounts();
+  int actionKey = -1;
+  int keyPressed = 0;
+  bool exit = false;
+  Serial.printf("FILECOUNT=%d\n", fileCount);
+  if (fileCount > 0) {
+    xSemaphoreTake(lcdMutex, portMAX_DELAY);
+    lcd.setCursor(0, 0);
+    lcd.print(msg);
+    while (!exit) {
+      if (ttp229.keyChange) {
+        keyPressed = ttp229.GetKey16();
+        if (keyPressed != RELEASE) {
+          actionKey = keyPressed;
+          Serial.printf("actionKey=%d\n", actionKey);
+        } else {
+          if (actionKey != -1) {
+            switch (actionKey) {
+            case UP:
+              --cnt;
+              if (cnt < 0) {
+                cnt = 0;
+              }
+              break;
+            case DOWN:
+              ++cnt;
+              if (cnt > fileCount) {
+                cnt = fileCount;
+              }
+              break;
+            case ENT:
+              myDFPlayer.play(cnt);
+              Serial.printf("Playing File=%d\n", cnt);
+              break;
+            case MENU:
+            case BACK:
+              exit = true;
+              break;
+            case DELETE:
+              break;
+            default:
+              break;
+            }
+            lcd.setCursor(5, 0);
+            if (cnt < 10) {
+              counter = "0" + String(cnt);
+            } else {
+              counter = String(cnt);
+            }
+            lcd.print(counter);
+            actionKey = -1;
+          }
+        }
+        delay(200);
+      }
+    }
+    xSemaphoreGive(lcdMutex);
+    lcd.clear();
+  } else {
+    Serial.println("Invalid File Count");
+  }
+  printSelected();
+}
+void handleModeSelect() {}
+
 void keyPressTask(void *pvParameters) {
   printSelected();
   Serial.println("Starting Key Press Detection");
@@ -256,18 +329,37 @@ void keyPressTask(void *pvParameters) {
             break;
           case ENT:
             if (obj.currentItemHasChildren()) {
-              lcd.clear();
               obj.descendToChildMenu();
+              currentItem = obj.getCurrentItemCmdId();
+              lcd.clear();
               printSelected();
             } else {
               switch (currentItem) {
               case mnuCmdHome:
+                Serial.println("Home Entered");
                 handleHome();
                 Serial.println("Home Exited");
                 break;
               case mnuCmdManual:
+                Serial.println("ManualMode Entered");
+                handleManualMode();
+                Serial.println("ManualMode Exited");
                 break;
-              case mnuCmdModeSelect:
+              case mnuCmdSummer:
+                currentMode = SUMMER;
+                Serial.println("Mode=SUMMER");
+                break;
+              case mnuCmdWinter:
+                currentMode = WINTER;
+                Serial.println("Mode=WINTER");
+                break;
+              case mnuCmdExam:
+                currentMode = EXAM;
+                Serial.println("Mode=EXAM");
+                break;
+              case mnuCmdOFF:
+                currentMode = UNDEFINED;
+                Serial.println("Mode=Undefined");
                 break;
               default:
                 break;
@@ -275,8 +367,20 @@ void keyPressTask(void *pvParameters) {
             }
             break;
           case MENU:
+            obj.reset();
+            currentItem = mnuCmdHome;
+            lcd.clear();
+            printSelected();
             break;
           case BACK:
+            // todo: make it go to the item from where child was entered instead
+            // of going to root of parent on pressing back
+            if (obj.currentMenuHasParent()) {
+              obj.ascendToParentMenu();
+              currentItem = obj.getCurrentItemCmdId();
+              lcd.clear();
+              printSelected();
+            }
             break;
           case DELETE:
             break;
@@ -384,10 +488,10 @@ void keyPressTask(void *pvParameters) {
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
+
+  /*------------LCD-----------------*/
   lcd.begin();
   lcd.backlight();
-  ttp229.begin(TTP229_SCL, TTP229_SDO);
-  attachInterrupt(digitalPinToInterrupt(TTP229_SDO), keyChange, RISING);
   lcdMutex = xSemaphoreCreateMutex();
   if (lcdMutex == NULL) {
     Serial.println("Could not create mutex for lcdMutex");
@@ -396,41 +500,85 @@ void setup() {
     Serial.println("Mutex Created");
   }
   createCustomCharacters();
+
+  /*-----------TTP229--------------*/
+  ttp229.begin(TTP229_SCL, TTP229_SDO);
+  attachInterrupt(digitalPinToInterrupt(TTP229_SDO), keyChange, RISING);
+  /*-------------df player------------*/
+  mySoftwareSerial.begin(9600, SERIAL_8N1, 16, 17);
+  if (!myDFPlayer.begin(mySoftwareSerial)) {
+    Serial.println("DF Module Error");
+    while (1) {
+    }
+  }
+  Serial.println(F("DFPlayer Mini online."));
+  myDFPlayer.setTimeOut(500); // Set serial communictaion time out 500ms
+  myDFPlayer.volume(26);      // Set volume value (0~30).
+  myDFPlayer.EQ(DFPLAYER_EQ_JAZZ);
+  myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
+  myDFPlayer.outputDevice(DFPLAYER_DEVICE_AUX);
+  /*---------rtc init------------*/
+  rtc.Begin();
+  RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+  if (!rtc.IsDateTimeValid()) {
+    if (rtc.LastError() != 0) {
+      Serial.print("RTC communicatins error= ");
+      Serial.println(rtc.LastError());
+    } else {
+      Serial.println("RTC lost confidence in date and time");
+      rtc.SetDateTime(compiled);
+    }
+  }
+  if (!rtc.GetIsRunning()) {
+    Serial.println("RTC was not actively running, starting now");
+    rtc.SetIsRunning(true);
+  }
+
+  RtcDateTime now = rtc.GetDateTime();
+  if (now < compiled) {
+    Serial.println("rtc is older than compile time. Updating");
+    // rtc.SetDateTime(compiled); //NOTE: not updating date time
+  } else {
+    Serial.println("rtc time same or newer than compile time");
+  }
+  rtc.Enable32kHzPin(false);
+  rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
+  /*-----------Tasks-----------------*/
   xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
 }
 
 void loop() { delay(10000); }
 
-// int keyPressCheck() {
-//   int actionKey = -1;
-//   int keyPressed = 0;
-//   while (!exit) {
-//     if (ttp229.keyChange) {
-//       keyPressed = ttp229.GetKey16();
-//       if (keyPressed != RELEASE) {
-//         actionKey = keyPressed;
-//         Serial.printf("actionKey=%d\n", actionKey);
-//       } else {
-//         if (actionKey != -1) {
-//           switch (actionKey) {
-//           case UP:
-//             break;
-//           case DOWN:
-//             break;
-//           case ENT:
-//             break;
-//           case MENU:
-//             break;
-//           case BACK:
-//             break;
-//           case DELETE:
-//             break;
-//           default:
-//             break;
-//           }
-//           actionKey = -1;
-//         }
-//       }
-//     }
-//   }
-// }
+int keyPressCheck() {
+  int actionKey = -1;
+  int keyPressed = 0;
+  while (!exit) {
+    if (ttp229.keyChange) {
+      keyPressed = ttp229.GetKey16();
+      if (keyPressed != RELEASE) {
+        actionKey = keyPressed;
+        Serial.printf("actionKey=%d\n", actionKey);
+      } else {
+        if (actionKey != -1) {
+          switch (actionKey) {
+          case UP:
+            break;
+          case DOWN:
+            break;
+          case ENT:
+            break;
+          case MENU:
+            break;
+          case BACK:
+            break;
+          case DELETE:
+            break;
+          default:
+            break;
+          }
+          actionKey = -1;
+        }
+      }
+    }
+  }
+}
