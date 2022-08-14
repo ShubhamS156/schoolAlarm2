@@ -544,6 +544,8 @@ void setup() {
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-----------Tasks-----------------*/
   xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
+  //starting homescreen by default
+  //handleHome();
 }
 
 void loop() { delay(10000); }
