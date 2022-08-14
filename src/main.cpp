@@ -86,7 +86,6 @@ void printSelected() {
 
   int counter = 1;
   lcd.setCursor(0, 0);
-  lcd.blink();
   if (obj.getCurrentItemIndex() < 4) {
     // print top 4 items
     for (int i = 0; i < 4; i++) {
@@ -549,36 +548,36 @@ void setup() {
 
 void loop() { delay(10000); }
 
-int keyPressCheck() {
-  int actionKey = -1;
-  int keyPressed = 0;
-  while (!exit) {
-    if (ttp229.keyChange) {
-      keyPressed = ttp229.GetKey16();
-      if (keyPressed != RELEASE) {
-        actionKey = keyPressed;
-        Serial.printf("actionKey=%d\n", actionKey);
-      } else {
-        if (actionKey != -1) {
-          switch (actionKey) {
-          case UP:
-            break;
-          case DOWN:
-            break;
-          case ENT:
-            break;
-          case MENU:
-            break;
-          case BACK:
-            break;
-          case DELETE:
-            break;
-          default:
-            break;
-          }
-          actionKey = -1;
-        }
-      }
-    }
-  }
-}
+// int keyPressCheck() {
+//   int actionKey = -1;
+//   int keyPressed = 0;
+//   while (!exit) {
+//     if (ttp229.keyChange) {
+//       keyPressed = ttp229.GetKey16();
+//       if (keyPressed != RELEASE) {
+//         actionKey = keyPressed;
+//         Serial.printf("actionKey=%d\n", actionKey);
+//       } else {
+//         if (actionKey != -1) {
+//           switch (actionKey) {
+//           case UP:
+//             break;
+//           case DOWN:
+//             break;
+//           case ENT:
+//             break;
+//           case MENU:
+//             break;
+//           case BACK:
+//             break;
+//           case DELETE:
+//             break;
+//           default:
+//             break;
+//           }
+//           actionKey = -1;
+//         }
+//       }
+//     }
+//   }
+// }
