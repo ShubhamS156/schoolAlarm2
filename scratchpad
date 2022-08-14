@@ -21,3 +21,8 @@ loopFlag vs currentItem
 
 right now on a mode exits on pressing down, but ahead a function will be called , so mode's content will be cleared after calling function and current menu will be 
 displayed.
+
+
+
+
+every mode will have its own handler, which will take care of writing and clearing lcd.
