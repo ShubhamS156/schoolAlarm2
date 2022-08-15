@@ -353,6 +353,7 @@ void handleSetDateTime() {
   RtcDateTime now;
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   lcd.blink_on();
+  lcd.clear();
   lcd.print("Set Time");
   lcd.setCursor(cursorPos, time_row);
   lcd.print("00:00");
