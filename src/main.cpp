@@ -348,7 +348,9 @@ void handleSetDateTime() {
   int actionKey = -1;
   int keyPressed = 0;
   bool exit = false;
+  bool setTime = false;
   String invalidMsg = "Invalid Key";
+  RtcDateTime now;
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   lcd.blink_on();
   lcd.print("Set Time");
@@ -373,9 +375,7 @@ void handleSetDateTime() {
           case ENT:
             hour = 10 * timeBuf[0] + timeBuf[1];
             min = 10 * timeBuf[2] + timeBuf[3];
-            RtcDateTime now = rtc.GetDateTime();
-            RtcDateTime updated(now.Year(), now.Month(), now.Day(), h, m, 0);
-            rtc.SetDateTime(updated);
+            setTime = true;
             exit = true;
             break;
           case MENU:
@@ -432,6 +432,11 @@ void handleSetDateTime() {
       }
     }
   }
+
+  now = rtc.GetDateTime();
+  RtcDateTime updated(now.Year(), now.Month(), now.Day(), hour, min, 0);
+  updated = now;
+  rtc.SetDateTime(updated);
   lcd.clear();
   xSemaphoreGive(lcdMutex);
   printSelected();
@@ -695,36 +700,36 @@ void setup() {
 
 void loop() { delay(10000); }
 
-int keyPressCheck() {
-  int actionKey = -1;
-  int keyPressed = 0;
-  while (!exit) {
-    if (ttp229.keyChange) {
-      keyPressed = ttp229.GetKey16();
-      if (keyPressed != RELEASE) {
-        actionKey = keyPressed;
-        Serial.printf("actionKey=%d\n", actionKey);
-      } else {
-        if (actionKey != -1) {
-          switch (actionKey) {
-          case UP:
-            break;
-          case DOWN:
-            break;
-          case ENT:
-            break;
-          case MENU:
-            break;
-          case BACK:
-            break;
-          case DELETE:
-            break;
-          default:
-            break;
-          }
-          actionKey = -1;
-        }
-      }
-    }
-  }
-}
+// int keyPressCheck() {
+//   int actionKey = -1;
+//   int keyPressed = 0;
+//   while (!exit) {
+//     if (ttp229.keyChange) {
+//       keyPressed = ttp229.GetKey16();
+//       if (keyPressed != RELEASE) {
+//         actionKey = keyPressed;
+//         Serial.printf("actionKey=%d\n", actionKey);
+//       } else {
+//         if (actionKey != -1) {
+//           switch (actionKey) {
+//           case UP:
+//             break;
+//           case DOWN:
+//             break;
+//           case ENT:
+//             break;
+//           case MENU:
+//             break;
+//           case BACK:
+//             break;
+//           case DELETE:
+//             break;
+//           default:
+//             break;
+//           }
+//           actionKey = -1;
+//         }
+//       }
+//     }
+//   }
+// }
