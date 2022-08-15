@@ -436,7 +436,6 @@ void handleSetDateTime() {
   if (setTime) {
     now = rtc.GetDateTime();
     RtcDateTime updated(now.Year(), now.Month(), now.Day(), hour, min, 0);
-    updated = now;
     rtc.SetDateTime(updated);
     Serial.println("Time Updated");
     Serial.printf("%d:%d\n", hour, min);
