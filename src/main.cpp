@@ -433,11 +433,17 @@ void handleSetDateTime() {
       }
     }
   }
-
-  now = rtc.GetDateTime();
-  RtcDateTime updated(now.Year(), now.Month(), now.Day(), hour, min, 0);
-  updated = now;
-  rtc.SetDateTime(updated);
+  if (setTime) {
+    now = rtc.GetDateTime();
+    RtcDateTime updated(now.Year(), now.Month(), now.Day(), hour, min, 0);
+    updated = now;
+    rtc.SetDateTime(updated);
+    Serial.println("Time Updated");
+    Serial.printf("%d:%d\n", hour, min);
+  } else {
+    Serial.println("Time not updated");
+  }
+  lcd.blink_off();
   lcd.clear();
   xSemaphoreGive(lcdMutex);
   printSelected();
