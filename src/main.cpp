@@ -173,7 +173,49 @@ void drawHome(RtcDateTime &dt) {
     lcd.print("N/a");
   }
 }
-
+void gotoRoot() {
+  obj.reset();
+  currentItem = mnuCmdHome;
+  lcd.clear();
+  printSelected();
+}
+int parseNumKeys(int actionKey) {
+  switch (actionKey) {
+  case ONE:
+    return 1;
+    break;
+  case TWO:
+    return 2;
+    break;
+  case THREE:
+    return 3;
+    break;
+  case FOUR:
+    return 4;
+    break;
+  case FIVE:
+    return 5;
+    break;
+  case SIX:
+    return 6;
+    break;
+  case SEVEN:
+    return 7;
+    break;
+  case EIGHT:
+    return 8;
+    break;
+  case NINE:
+    return 9;
+    break;
+  case ZERO:
+    return 0;
+    break;
+  default:
+    return -1; // if invalid key return -1;
+    break;
+  }
+}
 void keyChange() {
   // A key press changed
   ttp229.keyChange = true;
@@ -296,8 +338,104 @@ void handleManualMode() {
   }
   printSelected();
 }
-void handleModeSelect() {}
 
+void handleSetDateTime() {
+  // cnt=which value out of hh:mm
+  // cursorPos= position of cursor.
+  int hour = 0, min = 0, cnt = 0, cursorPos = 0, tmp = 0;
+  int time_row = 1;
+  int timeBuf[4] = {0, 0, 0, 0};
+  int actionKey = -1;
+  int keyPressed = 0;
+  bool exit = false;
+  String invalidMsg = "Invalid Key";
+  xSemaphoreTake(lcdMutex, portMAX_DELAY);
+  lcd.blink_on();
+  lcd.print("Set Time");
+  lcd.setCursor(cursorPos, time_row);
+  lcd.print("00:00");
+  lcd.setCursor(cursorPos, time_row);
+  while (!exit) {
+    if (ttp229.keyChange) {
+      keyPressed = ttp229.GetKey16();
+      if (keyPressed != RELEASE) {
+        actionKey = keyPressed;
+        Serial.printf("actionKey=%d\n", actionKey);
+      } else {
+        if (actionKey != -1) {
+          switch (actionKey) {
+          case UP:
+            Serial.println("Invalid Key");
+            break;
+          case DOWN:
+            Serial.println("Invalid Key");
+            break;
+          case ENT:
+            hour = 10 * timeBuf[0] + timeBuf[1];
+            min = 10 * timeBuf[2] + timeBuf[3];
+            RtcDateTime now = rtc.GetDateTime();
+            RtcDateTime updated(now.Year(), now.Month(), now.Day(), h, m, 0);
+            rtc.SetDateTime(updated);
+            exit = true;
+            break;
+          case MENU:
+            // TODO: experimental. use flag for menu pressed, exit while() then
+            // run cleanup if this does not works.
+            xSemaphoreGive(lcdMutex);
+            gotoRoot();
+            return;
+            break;
+          case BACK:
+            // currentItem->stays same. just exit and show printSelected()
+            exit = true;
+            break;
+          case DELETE:
+            if (cnt == 0 || cursorPos == 0) {
+              break;
+            }
+            --cnt;
+            --cursorPos;
+            timeBuf[cnt] = 0;
+            if (cursorPos == 2) { // there is colon at 2
+              cursorPos = 1;
+            }
+            lcd.setCursor(cursorPos, time_row);
+            lcd.print("0");
+            lcd.setCursor(cursorPos, time_row);
+            break;
+          default:
+            // default means a number key is pressed.
+            // break if we have already entered 4 numbers.
+            if (cnt >= 4) {
+              break;
+            }
+            tmp = parseNumKeys(actionKey);
+            if (tmp == -1) {
+              Serial.println(
+                  "Invalid Number Key pressed, shouldnt be possible!!");
+            } else {
+              timeBuf[cnt] = tmp;
+              lcd.setCursor(cursorPos,
+                            time_row); // todo:check affect of removing this
+                                       // ..my guess is nothing
+              lcd.print(String(tmp));
+              ++cnt;
+              ++cursorPos;
+              if (cursorPos == 2) {
+                ++cursorPos;
+              }
+            }
+            break;
+          }
+          actionKey = -1;
+        }
+      }
+    }
+  }
+  lcd.clear();
+  xSemaphoreGive(lcdMutex);
+  printSelected();
+}
 void keyPressTask(void *pvParameters) {
   printSelected();
   Serial.println("Starting Key Press Detection");
@@ -363,6 +501,10 @@ void keyPressTask(void *pvParameters) {
                 currentMode = UNDEFINED;
                 Serial.println("Mode=Undefined");
                 break;
+              case mnuCmdSetDateTime:
+                Serial.println("SetDateTime Entered");
+                handleSetDateTime();
+                Serial.println("SetDateTime Exited");
               default:
                 break;
               }
@@ -547,42 +689,42 @@ void setup() {
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-----------Tasks-----------------*/
   xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
-  //starting homescreen by default
-  //handleHome();
+  // starting homescreen by default
+  // handleHome();
 }
 
 void loop() { delay(10000); }
 
-// int keyPressCheck() {
-//   int actionKey = -1;
-//   int keyPressed = 0;
-//   while (!exit) {
-//     if (ttp229.keyChange) {
-//       keyPressed = ttp229.GetKey16();
-//       if (keyPressed != RELEASE) {
-//         actionKey = keyPressed;
-//         Serial.printf("actionKey=%d\n", actionKey);
-//       } else {
-//         if (actionKey != -1) {
-//           switch (actionKey) {
-//           case UP:
-//             break;
-//           case DOWN:
-//             break;
-//           case ENT:
-//             break;
-//           case MENU:
-//             break;
-//           case BACK:
-//             break;
-//           case DELETE:
-//             break;
-//           default:
-//             break;
-//           }
-//           actionKey = -1;
-//         }
-//       }
-//     }
-//   }
-// }
+int keyPressCheck() {
+  int actionKey = -1;
+  int keyPressed = 0;
+  while (!exit) {
+    if (ttp229.keyChange) {
+      keyPressed = ttp229.GetKey16();
+      if (keyPressed != RELEASE) {
+        actionKey = keyPressed;
+        Serial.printf("actionKey=%d\n", actionKey);
+      } else {
+        if (actionKey != -1) {
+          switch (actionKey) {
+          case UP:
+            break;
+          case DOWN:
+            break;
+          case ENT:
+            break;
+          case MENU:
+            break;
+          case BACK:
+            break;
+          case DELETE:
+            break;
+          default:
+            break;
+          }
+          actionKey = -1;
+        }
+      }
+    }
+  }
+}
