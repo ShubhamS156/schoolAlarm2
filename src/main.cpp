@@ -399,6 +399,7 @@ void handleSetDateTime() {
             timeBuf[cnt] = 0;
             if (cursorPos == 2) { // there is colon at 2
               cursorPos = 1;
+              lcd.setCursor(cursorPos, time_row);
             }
             lcd.setCursor(cursorPos, time_row);
             lcd.print("0");
@@ -424,6 +425,7 @@ void handleSetDateTime() {
               ++cursorPos;
               if (cursorPos == 2) {
                 ++cursorPos;
+                lcd.setCursor(cursorPos, time_row);
               }
             }
             break;
