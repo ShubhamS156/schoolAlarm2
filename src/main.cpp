@@ -519,6 +519,7 @@ void handleSetDateTime() {
     gotoRoot();
   } else if (timeKey.first == BACK) {
     printSelected();
+    return;
   } else {
     // got time;
     now = rtc.GetDateTime();
@@ -686,6 +687,7 @@ void keyPressTask(void *pvParameters) {
                 Serial.println("SetDateTime Entered");
                 handleSetDateTime();
                 Serial.println("SetDateTime Exited");
+                break;
               case mnuCmdProgSched:
                 Serial.println("ProgSched Entered");
                 handleProgSched();
