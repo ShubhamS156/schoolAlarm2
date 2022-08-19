@@ -170,8 +170,7 @@ const char sampleMenu_4_6[] = " PROGRAM MONTHLY";
 const char sampleMenu_4_7[] = " CALENDAR HOLIDAY";
 const MenuItem sampleMenu_List_4[] = {
     {mnuCmdSetDateTime, sampleMenu_4_1},
-    {mnuCmdProgSched, sampleMenu_4_2, sampleMenu_List_4_2,
-     menuCount(sampleMenu_List_4_2)},
+    {mnuCmdProgSched, sampleMenu_4_2},
     {mnuCmdSummerWorkDays, sampleMenu_4_3, sampleMenu_List_4_3,
      menuCount(sampleMenu_List_4_3)},
     {mnuCmdWinterWorkDays, sampleMenu_4_4, sampleMenu_List_4_4,
