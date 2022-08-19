@@ -253,7 +253,7 @@ void handleHome() {
   bool exit = false;
   int actionKey = -1;
   int keyPressed = 0;
-  char *buf;
+  char buf[100];
   clearLcd();
   while (!exit) {
     xSemaphoreTake(lcdMutex, portMAX_DELAY);
