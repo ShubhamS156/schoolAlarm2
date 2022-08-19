@@ -687,6 +687,9 @@ void keyPressTask(void *pvParameters) {
                 Serial.println("SetDateTime Entered");
                 handleSetDateTime();
                 Serial.println("SetDateTime Exited");
+                Serial.println("Entering Home");
+                handleHome();
+                Serial.println("Exiting Home");
                 break;
               case mnuCmdProgSched:
                 Serial.println("ProgSched Entered");
