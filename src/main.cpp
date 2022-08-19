@@ -571,7 +571,7 @@ void handleProgSched() {
                         currBellCnt);
           Pair timeKey, fileKey;
           String msg = "Set time for Bell="+String(currBellCnt);
-          timeKey = getDateTime("");
+          timeKey = getDateTime(msg);
           if (timeKey.first == MENU) {
             gotoRoot();
             return;
