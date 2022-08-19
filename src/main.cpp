@@ -588,6 +588,8 @@ void handleProgSched() {
                           timeKey.second, selectedSched, currBellCnt);
           }
 
+          int tmp = myDFPlayer.readFileCounts();
+          Serial.printf("Tmp FileCount=%d\n",tmp);
           fileKey = getFile(0, myDFPlayer.readFileCounts(), "File-", 200);
           if (fileKey.first == MENU) {
             gotoRoot();
