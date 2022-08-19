@@ -565,7 +565,7 @@ void handleProgSched() {
         }
         int currBellCnt = 1; // the bell which we are processing.
         while (currBellCnt <= bellCountKey.second) {
-          Serial.printf("Processing Sched=&d, Bell=%d\n", selectedSched,
+          Serial.printf("Processing Sched=%d, Bell=%d\n", selectedSched,
                         currBellCnt);
           xSemaphoreTake(lcdMutex, portMAX_DELAY);
           lcd.print("Bell-");
@@ -589,6 +589,7 @@ void handleProgSched() {
           }
 
           int tmp = myDFPlayer.readFileCounts();
+          //TODO: fix have to call readFileCounts twice to get true value. why?
           Serial.printf("Tmp FileCount=%d\n",tmp);
           fileKey = getFile(0, myDFPlayer.readFileCounts(), "File-", 200);
           if (fileKey.first == MENU) {
@@ -603,6 +604,7 @@ void handleProgSched() {
             Serial.printf("Set File=%d, Sched=%d, Bell=%d\n", fileKey.second,
                           selectedSched, currBellCnt);
           }
+          currBellCnt++;
           clearLcd();
         }
         Serial.printf("Completed Sched=%d\n", selectedSched);
