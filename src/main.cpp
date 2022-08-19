@@ -293,11 +293,8 @@ void handleHome() {
       delay(500);
     }
   }
-  Serial.println("Clearing");
   clearLcd();
-  Serial.println("Printing");
   printSelected();
-  Serial.println("Exiting");
 }
 /*
 Returns pair:
@@ -322,7 +319,7 @@ Pair getFile(int min, int fileCount, String msg, int delayMs) {
     lcd.clear();
     lcd.blink_off();
     lcd.setCursor(0, 0);
-    lcd.print(msg);
+    lcd.print(msg+String(min));
     while (!exit) {
       if (ttp229.keyChange) {
         keyPressed = ttp229.GetKey16();
