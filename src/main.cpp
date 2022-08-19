@@ -529,7 +529,7 @@ void handleSetDateTime() {
   }
 }
 void handleProgSched() {
-  bool exit = true;
+  bool exit = false;
   Pair progKey;
   while (!exit) {
     progKey = getFile(0, PROGSCHEDSIZE - 1, "P-", 200);
