@@ -291,8 +291,11 @@ void handleHome() {
       delay(500);
     }
   }
-  lcd.clear();
+  Serial.println("Clearing");
+  clearLcd();
+  Serial.println("Printing");
   printSelected();
+  Serial.println("Exiting");
 }
 /*
 Returns pair:
