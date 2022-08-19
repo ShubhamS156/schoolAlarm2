@@ -276,7 +276,7 @@ void handleHome() {
           case ENT:
             break;
           case MENU:
-            currentItem = -1; // exit flag
+            currentItem = mnuCmdManual; // exit flag
             break;
           case BACK:
             break;
