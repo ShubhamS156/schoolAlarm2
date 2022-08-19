@@ -31,7 +31,25 @@
 #define ZERO 14
 #define BACK 15
 #define ENT 16
+#define PROGSCHEDSIZE 24
+#define BELLCOUNTMAX 50
 
+/*--------------structs----------------*/
+typedef struct {
+  int hour;
+  int min;
+  int file;
+} Bell __packed;
+
+typedef struct {
+  int bellCount = 0;
+  Bell *bells;
+} ProgSched __packed;
+
+typedef struct {
+  int first = 0;
+  int second = 0;
+} Pair;
 /*-------------object init-------------*/
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 TTP229 ttp229;
@@ -64,7 +82,10 @@ static SemaphoreHandle_t lcdMutex;
 //-1 = undefined, 0=homescreen, 1=menuscreen
 static int currentItem = -1; // currently selected menuItem
 static int currentMode = UNDEFINED;
-
+static int currentProgSchedIdx =
+    -1; // not defined yet, will be updated from eeprom after first setup.
+ProgSched schedules[PROGSCHEDSIZE];
+ProgSched *currentProgSchedPtr = NULL;
 /*------------util funcs-----------------*/
 void createCustomCharacters() {
   lcd.createChar(0, verticalLine);
@@ -74,7 +95,6 @@ void createCustomCharacters() {
   lcd.createChar(4, char4);
   lcd.createChar(5, arrow);
 }
-
 void printSelected() {
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   const MenuItem *curr = obj.getMenuItem();
@@ -173,10 +193,15 @@ void drawHome(RtcDateTime &dt) {
     lcd.print("N/a");
   }
 }
+void clearLcd() {
+  xSemaphoreTake(lcdMutex, portMAX_DELAY);
+  lcd.clear();
+  xSemaphoreGive(lcdMutex);
+}
 void gotoRoot() {
   obj.reset();
   currentItem = mnuCmdHome;
-  lcd.clear();
+  clearLcd();
   printSelected();
 }
 int parseNumKeys(int actionKey) {
@@ -269,19 +294,28 @@ void handleHome() {
   lcd.clear();
   printSelected();
 }
-void handleManualMode() {
-  lcd.clear();
-  lcd.blink_off();
-  String msg = "FILE=x";
+/*
+Returns pair:
+key,val
+ENT,FILE
+MENU,-1
+BACK,-1
+*/
+Pair getFile(int min, int fileCount, String msg, int delayMs) {
+  // String msg = "FILE=x";
   String counter = "";
-  int cnt = 0;
-  int fileCount = myDFPlayer.readFileCounts();
+  int cnt = min;
+  // int fileCount = myDFPlayer.readFileCounts();
   int actionKey = -1;
   int keyPressed = 0;
   bool exit = false;
+  Pair returnKey;
+  returnKey.first = returnKey.second = 0;
   Serial.printf("FILECOUNT=%d\n", fileCount);
-  if (fileCount > 0) {
+  if (fileCount > min) {
     xSemaphoreTake(lcdMutex, portMAX_DELAY);
+    lcd.clear();
+    lcd.blink_off();
     lcd.setCursor(0, 0);
     lcd.print(msg);
     while (!exit) {
@@ -295,8 +329,8 @@ void handleManualMode() {
             switch (actionKey) {
             case UP:
               --cnt;
-              if (cnt < 0) {
-                cnt = 0;
+              if (cnt < min) {
+                cnt = min;
               }
               break;
             case DOWN:
@@ -306,11 +340,17 @@ void handleManualMode() {
               }
               break;
             case ENT:
-              myDFPlayer.play(cnt);
-              Serial.printf("Playing File=%d\n", cnt);
+              returnKey.first = ENT;
+              returnKey.second = cnt;
+              exit = true;
               break;
             case MENU:
+              returnKey.first = MENU;
+              returnKey.second = -1;
+              exit = true;
             case BACK:
+              returnKey.first = BACK;
+              returnKey.second = -1;
               exit = true;
               break;
             case DELETE:
@@ -318,7 +358,7 @@ void handleManualMode() {
             default:
               break;
             }
-            lcd.setCursor(5, 0);
+            lcd.setCursor(msg.length(), 0);
             if (cnt < 10) {
               counter = "0" + String(cnt);
             } else {
@@ -328,18 +368,42 @@ void handleManualMode() {
             actionKey = -1;
           }
         }
-        delay(200);
+        delay(delayMs);
       }
     }
     xSemaphoreGive(lcdMutex);
-    lcd.clear();
   } else {
     Serial.println("Invalid File Count");
   }
-  printSelected();
+  return returnKey;
 }
 
-void handleSetDateTime() {
+void handleManualMode() {
+  bool exit = false;
+  Pair fileKey;
+  while (!exit) {
+    fileKey = getFile(0, myDFPlayer.readFileCounts(), "FILE-", 200);
+    if (fileKey.first == MENU) {
+      exit = true;
+      gotoRoot();
+    } else if (fileKey.first == BACK) {
+      exit = true;
+      lcd.clear();
+      printSelected();
+    } else if (fileKey.first == ENT) {
+      myDFPlayer.play(fileKey.second);
+      Serial.printf("Playing File=%d\n", fileKey.second);
+    }
+    delay(300);
+  }
+}
+
+/*
+Returns time in hhmm format
+Or
+Returns -1,abortKEY if pressed.
+*/
+Pair getDateTime() {
   // cnt=which value out of hh:mm
   // cursorPos= position of cursor.
   int hour = 0, min = 0, cnt = 0, cursorPos = 0, tmp = 0;
@@ -347,10 +411,12 @@ void handleSetDateTime() {
   int timeBuf[4] = {0, 0, 0, 0};
   int actionKey = -1;
   int keyPressed = 0;
+  Pair returnKey;
+  returnKey.first = returnKey.second = -1;
   bool exit = false;
   bool setTime = false;
+
   String invalidMsg = "Invalid Key";
-  RtcDateTime now;
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   lcd.blink_on();
   lcd.clear();
@@ -376,18 +442,21 @@ void handleSetDateTime() {
           case ENT:
             hour = 10 * timeBuf[0] + timeBuf[1];
             min = 10 * timeBuf[2] + timeBuf[3];
-            setTime = true;
+            returnKey.first = hour;
+            returnKey.second = min;
             exit = true;
             break;
           case MENU:
             // TODO: experimental. use flag for menu pressed, exit while() then
             // run cleanup if this does not works.
-            xSemaphoreGive(lcdMutex);
-            gotoRoot();
-            return;
+            returnKey.first = MENU;
+            returnKey.second = -1; // key to send in the end of func
+            exit = true;           // exit this loop
             break;
           case BACK:
             // currentItem->stays same. just exit and show printSelected()
+            returnKey.first = BACK;
+            returnKey.second = -1;
             exit = true;
             break;
           case DELETE:
@@ -435,20 +504,116 @@ void handleSetDateTime() {
       }
     }
   }
-  if (setTime) {
-    now = rtc.GetDateTime();
-    RtcDateTime updated(now.Year(), now.Month(), now.Day(), hour, min, 0);
-    rtc.SetDateTime(updated);
-    Serial.println("Time Updated");
-    Serial.printf("%d:%d\n", hour, min);
-  } else {
-    Serial.println("Time not updated");
-  }
   lcd.blink_off();
   lcd.clear();
   xSemaphoreGive(lcdMutex);
+  return returnKey;
+}
+void handleSetDateTime() {
+  RtcDateTime now;
+  Pair timeKey = getDateTime();
+
+  if (timeKey.first == MENU) {
+    gotoRoot();
+  } else if (timeKey.first == BACK) {
+    printSelected();
+  } else {
+    // got time;
+    now = rtc.GetDateTime();
+    RtcDateTime updated(now.Year(), now.Month(), now.Day(), timeKey.first,
+                        timeKey.second, 0);
+    rtc.SetDateTime(updated);
+    Serial.println("Time Updated");
+    Serial.printf("%d:%d\n", timeKey.first, timeKey.second);
+    printSelected();
+  }
+}
+void handleProgSched() {
+  bool exit = true;
+  Pair progKey;
+  while (!exit) {
+    progKey = getFile(0, PROGSCHEDSIZE - 1, "P-", 200);
+    if (progKey.first == MENU) {
+      gotoRoot();
+      return;
+    } else if (progKey.first == BACK) {
+      clearLcd(); // thread safe.
+      printSelected();
+      return;
+    } else if (progKey.first == ENT) {
+      // selected a schedule to program.
+      int selectedSched = progKey.second;
+      // get number of bells for the selected schedule.
+      Pair bellCountKey = getFile(1, BELLCOUNTMAX, "Bells=", 200);
+      if (bellCountKey.first == MENU) {
+        gotoRoot();
+        return;
+      } else if (bellCountKey.first == BACK) {
+        clearLcd();
+        printSelected();
+        return;
+      } else if (bellCountKey.first == ENT) {
+        schedules[selectedSched].bellCount = bellCountKey.second;
+        // got the bell count here, alloc memory and iterate this many times to
+        // get time,file for each bell.
+        schedules[selectedSched].bells =
+            (Bell *)(calloc(bellCountKey.second, sizeof(Bell)));
+        Bell *currBellPtr = schedules[selectedSched].bells;
+        if (currBellPtr == NULL) {
+          Serial.printf("Allocating Mem Failed for Sched=%d\n", selectedSched);
+          return;
+        }
+        int currBellCnt = 1; // the bell which we are processing.
+        while (currBellCnt <= bellCountKey.second) {
+          Serial.printf("Processing Sched=&d, Bell=%d\n", selectedSched,
+                        currBellCnt);
+          xSemaphoreTake(lcdMutex, portMAX_DELAY);
+          lcd.print("Bell-");
+          lcd.print(String(currBellCnt));
+          xSemaphoreGive(lcdMutex);
+          Pair timeKey, fileKey;
+          timeKey = getDateTime();
+          if (timeKey.first == MENU) {
+            gotoRoot();
+            return;
+          } else if (timeKey.first == BACK) {
+            clearLcd();
+            printSelected();
+            return;
+          } else {
+            // got time.
+            currBellPtr[currBellCnt - 1].hour = timeKey.first;
+            currBellPtr[currBellCnt - 1].min = timeKey.second;
+            Serial.printf("Set %d:%d Sched=%d Bell=%d\n", timeKey.first,
+                          timeKey.second, selectedSched, currBellCnt);
+          }
+
+          fileKey = getFile(0, myDFPlayer.readFileCounts(), "File-", 200);
+          if (fileKey.first == MENU) {
+            gotoRoot();
+            return;
+          } else if (fileKey.first == BACK) {
+            clearLcd();
+            printSelected();
+            return;
+          } else if (fileKey.first == ENT) {
+            currBellPtr[currBellCnt - 1].file = fileKey.second;
+            Serial.printf("Set File=%d, Sched=%d, Bell=%d\n", fileKey.second,
+                          selectedSched, currBellCnt);
+          }
+          clearLcd();
+        }
+        Serial.printf("Completed Sched=%d\n", selectedSched);
+        Serial.println("Storing in EEPROM");
+        // TODO: store sched in eeprom here.
+      }
+    }
+    delay(100);
+  }
+  clearLcd();
   printSelected();
 }
+
 void keyPressTask(void *pvParameters) {
   printSelected();
   Serial.println("Starting Key Press Detection");
@@ -518,6 +683,10 @@ void keyPressTask(void *pvParameters) {
                 Serial.println("SetDateTime Entered");
                 handleSetDateTime();
                 Serial.println("SetDateTime Exited");
+              case mnuCmdProgSched:
+                Serial.println("ProgSched Entered");
+                handleProgSched();
+                Serial.println("ProgSched Exited");
               default:
                 break;
               }
@@ -708,36 +877,36 @@ void setup() {
 
 void loop() { delay(10000); }
 
-// int keyPressCheck() {
-//   int actionKey = -1;
-//   int keyPressed = 0;
-//   while (!exit) {
-//     if (ttp229.keyChange) {
-//       keyPressed = ttp229.GetKey16();
-//       if (keyPressed != RELEASE) {
-//         actionKey = keyPressed;
-//         Serial.printf("actionKey=%d\n", actionKey);
-//       } else {
-//         if (actionKey != -1) {
-//           switch (actionKey) {
-//           case UP:
-//             break;
-//           case DOWN:
-//             break;
-//           case ENT:
-//             break;
-//           case MENU:
-//             break;
-//           case BACK:
-//             break;
-//           case DELETE:
-//             break;
-//           default:
-//             break;
-//           }
-//           actionKey = -1;
-//         }
-//       }
-//     }
-//   }
-// }
+int keyPressCheck() {
+  int actionKey = -1;
+  int keyPressed = 0;
+  while (!exit) {
+    if (ttp229.keyChange) {
+      keyPressed = ttp229.GetKey16();
+      if (keyPressed != RELEASE) {
+        actionKey = keyPressed;
+        Serial.printf("actionKey=%d\n", actionKey);
+      } else {
+        if (actionKey != -1) {
+          switch (actionKey) {
+          case UP:
+            break;
+          case DOWN:
+            break;
+          case ENT:
+            break;
+          case MENU:
+            break;
+          case BACK:
+            break;
+          case DELETE:
+            break;
+          default:
+            break;
+          }
+          actionKey = -1;
+        }
+      }
+    }
+  }
+}

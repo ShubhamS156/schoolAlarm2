@@ -1,0 +1,61 @@
+
+  xSemaphoreTake(lcdMutex, portMAX_DELAY);
+  lcd.clear();
+  String msg = "P-";
+  String counter = "";
+  int cnt = 0;
+  int actionKey = -1;
+  int keyPressed = RELEASE;
+  bool exit = false;
+
+  while (!exit) {
+    if (ttp229.keyChange) {
+      keyPressed = ttp229.GetKey16();
+      if (keyPressed != RELEASE) {
+        actionKey = keyPressed;
+        Serial.printf("actionKey=%d\n", actionKey);
+      } else {
+        if (actionKey != -1) {
+          switch (actionKey) {
+          case UP:
+            --cnt;
+            if (cnt < 0)
+              cnt = 0;
+            break;
+          case DOWN:
+            ++cnt;
+            if (cnt > PROGSCHEDSIZE)
+              cnt = PROGSCHEDSIZE;
+            break;
+          case ENT:
+            Serial.printf("Starting ProgSched P=%d\n", cnt);
+            Pair bellCount = getFile(1, BELLCOUNTMAX, "Bells=", 300);
+            if (bellCount.first == MENU) {
+              gotoRoot();
+            } else if (bellCount.first == BACK) {
+              printSelected();
+            }
+            break;
+          case MENU:
+            break;
+          case BACK:
+            exit = true;
+            break;
+          case DELETE:
+            break;
+          default:
+            break;
+          }
+          actionKey = -1;
+          lcd.setCursor(3, 0);
+          if (cnt < 10) {
+            counter = "0" + String(cnt);
+          } else {
+            counter = String(cnt);
+          }
+          lcd.print(counter);
+        }
+      }
+    }
+  }
+  xSemaphoreGive(lcdMutex);
