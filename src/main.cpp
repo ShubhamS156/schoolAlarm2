@@ -405,7 +405,7 @@ Returns time in hhmm format
 Or
 Returns -1,abortKEY if pressed.
 */
-Pair getDateTime() {
+Pair getDateTime(String msg) {
   // cnt=which value out of hh:mm
   // cursorPos= position of cursor.
   int hour = 0, min = 0, cnt = 0, cursorPos = 0, tmp = 0;
@@ -422,7 +422,7 @@ Pair getDateTime() {
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   lcd.blink_on();
   lcd.clear();
-  lcd.print("Set Time");
+  lcd.print(msg);
   lcd.setCursor(cursorPos, time_row);
   lcd.print("00:00");
   lcd.setCursor(cursorPos, time_row);
@@ -513,7 +513,7 @@ Pair getDateTime() {
 }
 void handleSetDateTime() {
   RtcDateTime now;
-  Pair timeKey = getDateTime();
+  Pair timeKey = getDateTime("Set Time");
 
   if (timeKey.first == MENU) {
     gotoRoot();
@@ -569,12 +569,9 @@ void handleProgSched() {
         while (currBellCnt <= bellCountKey.second) {
           Serial.printf("Processing Sched=%d, Bell=%d\n", selectedSched,
                         currBellCnt);
-          xSemaphoreTake(lcdMutex, portMAX_DELAY);
-          lcd.print("Bell-");
-          lcd.print(String(currBellCnt));
-          xSemaphoreGive(lcdMutex);
           Pair timeKey, fileKey;
-          timeKey = getDateTime();
+          String msg = "Set time for Bell="+String(currBellCnt);
+          timeKey = getDateTime("");
           if (timeKey.first == MENU) {
             gotoRoot();
             return;
