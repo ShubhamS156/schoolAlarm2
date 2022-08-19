@@ -250,11 +250,12 @@ void keyChange() {
 
 void handleHome() {
   RtcDateTime now = rtc.GetDateTime();
+  bool exit = false;
   int actionKey = -1;
   int keyPressed = 0;
   char *buf;
-  lcd.clear();
-  while (currentItem == mnuCmdHome) {
+  clearLcd();
+  while (!exit) {
     xSemaphoreTake(lcdMutex, portMAX_DELAY);
     printFrame();
     drawHome(now);
@@ -276,7 +277,8 @@ void handleHome() {
           case ENT:
             break;
           case MENU:
-            currentItem = mnuCmdManual; // exit flag
+            //currentItem = mnuCmdManual; // exit flag
+            exit = true;
             break;
           case BACK:
             break;
