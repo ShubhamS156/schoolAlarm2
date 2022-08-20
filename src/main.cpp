@@ -923,9 +923,8 @@ void setup() {
   /*-------------eeprom--------------*/
   String key = "p1"; // treating 1st schedule as active.
   void* tmp;
-  int len = pref.getBytes(key.c_str(), tmp , sizeof(ProgSched));
-  activeSchedPtr = (ProgSched*)tmp;
-  activeSchedule = *activeSchedPtr;
+  int len = pref.getBytes(key.c_str(), &activeSchedule, pref.getBytesLength(key.c_str()));
+  activeSchedPtr = &activeSchedule;
   if (len == 0) {
     Serial.println("No Schedule Stored");
   } else {
