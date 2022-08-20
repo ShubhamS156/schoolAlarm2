@@ -921,9 +921,11 @@ void setup() {
   rtc.Enable32kHzPin(false);
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
-  String key = "p1"; // treating 0th schedule as active.
-  int len = pref.getBytes(key.c_str(), &activeSchedule, sizeof(ProgSched));
-  activeSchedPtr = &activeSchedule;
+  String key = "p1"; // treating 1st schedule as active.
+  void* tmp;
+  int len = pref.getBytes(key.c_str(), tmp , sizeof(ProgSched));
+  activeSchedPtr = (ProgSched*)tmp;
+  activeSchedule = *activeSchedPtr;
   if (len == 0) {
     Serial.println("No Schedule Stored");
   } else {
