@@ -762,7 +762,7 @@ void keyPressAndAlarmTask(void *pvParameters) {
       prevAlarmCheck = millis();
       if (activeSchedPtr->bells[activeBellCnt].hour == now.Hour() &&
           activeSchedPtr->bells[activeBellCnt].min == now.Minute()) {
-        myDFPlayer.play(activeSchedPtr->bells->file);
+        myDFPlayer.play(activeSchedPtr->bells[activeBellCnt].file);
         Serial.printf("Playing Bell=%d File=%d\n", activeBellCnt,
                       activeSchedPtr->bells->file);
         activeBellCnt++;
