@@ -760,8 +760,8 @@ void keyPressAndAlarmTask(void *pvParameters) {
       now = rtc.GetDateTime();
       Serial.printf("%d:%d\n",now.Hour(),now.Minute());
       prevAlarmCheck = millis();
-      if (activeSchedPtr->bells->hour == now.Hour() &&
-          activeSchedPtr->bells->min == now.Minute()) {
+      if (activeSchedPtr->bells[activeBellCnt].hour == now.Hour() &&
+          activeSchedPtr->bells[activeBellCnt].min == now.Minute()) {
         myDFPlayer.play(activeSchedPtr->bells->file);
         Serial.printf("Playing Bell=%d File=%d\n", activeBellCnt,
                       activeSchedPtr->bells->file);
