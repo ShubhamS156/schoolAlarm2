@@ -88,6 +88,7 @@ static int currentMode = UNDEFINED;
 static int activeSchedIdx = -1; // no active yet.
 ProgSched schedules[PROGSCHEDSIZE];
 ProgSched *activeSchedPtr = NULL;
+ProgSched activeSchedule;
 static bool schedFoundEeprom = false;
 int activeBellCount = 0;
 int activeBellCnt = 0;
@@ -620,7 +621,7 @@ void handleProgSched() {
         void *value = (void *)(&(schedules[selectedSched]));
         int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
         Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
-        Serial.println("Activating Schedule=%d\n");
+        Serial.println("Activating Schedule=%d\n",selectedSched);
         activeSchedIdx = selectedSched;
       }
     }
@@ -910,7 +911,8 @@ void setup() {
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
   String key = "p0"; // treating 0th schedule as active.
-  int len = pref.getBytes(key.c_str(), activeSchedPtr, sizeof(ProgSched));
+  int len = pref.getBytes(key.c_str(), &activeSchedule, sizeof(ProgSched));
+  activeSchedPtr = &activeSchedule;
   if (len == 0) {
     Serial.println("No Schedule Stored");
   } else {
