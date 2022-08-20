@@ -3,6 +3,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <MenuData.h>
 #include <MenuManager.h>
+#include <Preferences.h>
 #include <RtcDS3231.h>
 #include <TTP229.h>
 #include <Wire.h>
@@ -42,6 +43,7 @@ typedef struct {
 } Bell __packed;
 
 typedef struct {
+  int id;
   int bellCount = 0;
   Bell *bells;
 } ProgSched __packed;
@@ -57,6 +59,7 @@ MenuManager obj(sampleMenu_Root, menuCount(sampleMenu_Root));
 RtcDS3231<TwoWire> rtc(Wire);
 DFRobotDFPlayerMini myDFPlayer;
 HardwareSerial mySoftwareSerial(2);
+Preferences pref;
 /*--------------var init---------------*/
 byte verticalLine[8] = {B00100, B00100, B00100, B00100,
                         B00100, B00100, B00100, B00100};
@@ -82,10 +85,12 @@ static SemaphoreHandle_t lcdMutex;
 //-1 = undefined, 0=homescreen, 1=menuscreen
 static int currentItem = -1; // currently selected menuItem
 static int currentMode = UNDEFINED;
-static int currentProgSchedIdx =
-    -1; // not defined yet, will be updated from eeprom after first setup.
+static int activeSchedIdx = -1; // no active yet.
 ProgSched schedules[PROGSCHEDSIZE];
-ProgSched *currentProgSchedPtr = NULL;
+ProgSched *activeSchedPtr = NULL;
+static bool schedFoundEeprom = false;
+int activeBellCount = 0;
+int activeBellCnt = 0;
 /*------------util funcs-----------------*/
 void createCustomCharacters() {
   lcd.createChar(0, verticalLine);
@@ -546,6 +551,8 @@ void handleProgSched() {
     } else if (progKey.first == ENT) {
       // selected a schedule to program.
       int selectedSched = progKey.second;
+      // setting id = index
+      schedules[selectedSched].id = selectedSched;
       // get number of bells for the selected schedule.
       Pair bellCountKey = getFile(1, BELLCOUNTMAX, "Bells=", 200);
       if (bellCountKey.first == MENU) {
@@ -608,8 +615,13 @@ void handleProgSched() {
           clearLcd();
         }
         Serial.printf("Completed Sched=%d\n", selectedSched);
-        Serial.println("Storing in EEPROM");
         // TODO: store sched in eeprom here.
+        String key = "p" + String(selectedSched);
+        void *value = (void *)(&(schedules[selectedSched]));
+        int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
+        Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
+        Serial.println("Activating Schedule=%d\n");
+        activeSchedIdx = selectedSched;
       }
     }
     delay(100);
@@ -618,11 +630,13 @@ void handleProgSched() {
   printSelected();
 }
 
-void keyPressTask(void *pvParameters) {
+void keyPressAndAlarmTask(void *pvParameters) {
   printSelected();
   Serial.println("Starting Key Press Detection");
   int actionKey = -1;
   int keyPressed = 0;
+  int prevAlarmCheck = 0;
+  static RtcDateTime now;
   while (1) {
     if (ttp229.keyChange) {
       keyPressed = ttp229.GetKey16();
@@ -726,6 +740,21 @@ void keyPressTask(void *pvParameters) {
       }
       vTaskDelay(200 / portTICK_PERIOD_MS);
     }
+    // after detecting key
+    // check every 30 seconds for time.
+    if (schedFoundEeprom && millis() - prevAlarmCheck > 30000) {
+      Serial.printf("Checking for Schedule=%d, Bell=%d\n", activeSchedPtr->id,
+                    activeBellCnt);
+      now = rtc.GetDateTime();
+      prevAlarmCheck = millis();
+      if (activeSchedPtr->bells->hour == now.Hour() &&
+          activeSchedPtr->bells->min == now.Minute()) {
+        myDFPlayer.play(activeSchedPtr->bells->file);
+        Serial.printf("Playing Bell=%d File=%d\n", activeBellCnt,
+                      activeSchedPtr->bells->file);
+        activeBellCnt++;
+      }
+    }
   }
   // TODO: why this?
   vTaskDelete(NULL);
@@ -822,6 +851,8 @@ void keyPressTask(void *pvParameters) {
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
+  /*-----------Preferences---------*/
+  pref.begin("alarm");
 
   /*------------LCD-----------------*/
   lcd.begin();
@@ -877,8 +908,19 @@ void setup() {
   }
   rtc.Enable32kHzPin(false);
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
+  /*-------------eeprom--------------*/
+  String key = "p0"; // treating 0th schedule as active.
+  int len = pref.getBytes(key.c_str(), activeSchedPtr, sizeof(ProgSched));
+  if (len == 0) {
+    Serial.println("No Schedule Stored");
+  } else {
+    schedFoundEeprom = true;
+    activeBellCnt = 0;
+    activeBellCount = activeSchedPtr->bellCount;
+    Serial.println("Schedule Retrieved");
+  }
   /*-----------Tasks-----------------*/
-  xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
+  xTaskCreate(keyPressAndAlarmTask, "keyPressAlarm", 4096, NULL, 3, NULL);
   // starting homescreen by default
   // handleHome();
 }

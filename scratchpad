@@ -1,9 +1,5 @@
-TODO: 
+TODO:
 thread safe nav for the menu
-
-
-
-
 
 Story:
 
@@ -12,25 +8,34 @@ actually currentMode is also shared, but here we are treating as it is not coz i
 
 take mutex in every lcd writer function.
 
-
 keyPressTask will only be allowed to change currentMode.
-keyPressTask will handle navigations for everything. Different meaning for keys will be infered by checking for  the currentMode.
+keyPressTask will handle navigations for everything. Different meaning for keys will be infered by checking for the currentMode.
 if using keyPressTask only for nav and infered meaning of keys, will have to declare all the variables used in the task, will have to make some of them static , but waste of mem, as they wouldnt be needed after exiting say a particular mode.
 
 loopFlag vs currentItem
 
-right now on a mode exits on pressing down, but ahead a function will be called , so mode's content will be cleared after calling function and current menu will be 
+right now on a mode exits on pressing down, but ahead a function will be called , so mode's content will be cleared after calling function and current menu will be
 displayed.
 
-
-
-
 every mode will have its own handler, which will take care of writing and clearing lcd.
-
 
 ->on pressing back, i think currently it is going to the root of the parent menu, instead make it go to the menu item from where it entered the child menu
 -? figure out a way to start homescreen by default
 -> goto homescreen after mode select| check if this works now
 
 ->make util functions thread safe
-Implementing program schedule->
+Implementing program schedule-> Done
+
+Implement Alarm System->
+Get active schedule in setup() from eeprom according to day.
+
+    Maintain a counter for bell processed for the day
+    If now is equal to counter's bell's hour and min-> Ring..
+    Inc counter
+    Check if countr > countBells for the sched.
+    If yes we're done for the day,
+    Else Repeat from line 41.
+
+Currently I'm making the 0th programmed schedule active.
+
+Change structure of porgSched to include an id.
