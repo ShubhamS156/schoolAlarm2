@@ -290,6 +290,7 @@ void handleHome() {
           case BACK:
             break;
           case DELETE:
+            Serial.printf("Erasing Prefs: %d\n",pref.clear());
             break;
           default:
             break;
