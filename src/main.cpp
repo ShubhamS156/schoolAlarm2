@@ -621,7 +621,7 @@ void handleProgSched() {
         void *value = (void *)(&(schedules[selectedSched]));
         int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
         Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
-        Serial.println("Activating Schedule=%d\n",selectedSched);
+        Serial.printf("Activating Schedule=%d\n",selectedSched);
         activeSchedIdx = selectedSched;
       }
     }
