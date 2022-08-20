@@ -922,6 +922,7 @@ void setup() {
     activeBellCnt = 0;
     activeBellCount = activeSchedPtr->bellCount;
     Serial.println("Schedule Retrieved");
+    Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",activeSchedule.id,activeSchedule.bellCount,activeSchedule.bells[0].hour,activeSchedule.bells[0].min,activeSchedule.bells[0].file);
   }
   /*-----------Tasks-----------------*/
   xTaskCreate(keyPressAndAlarmTask, "keyPressAlarm", 4096, NULL, 3, NULL);
