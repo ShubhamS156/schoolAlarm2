@@ -744,7 +744,7 @@ void keyPressAndAlarmTask(void *pvParameters) {
     }
     // after detecting key
     // check every 30 seconds for time.
-    if (schedFoundEeprom && millis() - prevAlarmCheck > 20000) {
+    if (schedFoundEeprom && millis() - prevAlarmCheck > 30000) {
       Serial.printf("Checking for Schedule=%d, Bell=%d\n", activeSchedPtr->id,
                     activeBellCnt);
       now = rtc.GetDateTime();
