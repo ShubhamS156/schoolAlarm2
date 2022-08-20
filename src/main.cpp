@@ -37,14 +37,14 @@
 
 /*--------------structs----------------*/
 typedef struct {
-  int hour;
-  int min;
-  int file;
+  uint8_t hour;
+  uint8_t min;
+  uint8_t file;
 } Bell __packed;
 
 typedef struct {
-  int id;
-  int bellCount = 0;
+  uint8_t id;
+  uint8_t bellCount = 0;
   Bell *bells;
 } ProgSched __packed;
 
@@ -87,6 +87,7 @@ static int currentItem = -1; // currently selected menuItem
 static int currentMode = UNDEFINED;
 static int activeSchedIdx = -1; // no active yet.
 ProgSched schedules[PROGSCHEDSIZE];
+Bell bellArr[BELLCOUNTMAX];
 ProgSched *activeSchedPtr = NULL;
 ProgSched activeSchedule;
 static bool schedFoundEeprom = false;
@@ -619,20 +620,20 @@ void handleProgSched() {
         Serial.printf("Completed Sched=%d\n", selectedSched);
         ProgSched tmp = schedules[selectedSched];
         Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp.id,tmp.bellCount,tmp.bells[0].hour,tmp.bells[0].min,tmp.bells[0].file);
-        Serial.printf("Bells addr:%p\n",tmp.bells);
         // TODO: store sched in eeprom here.
+        //we have to store the data in dynamically allocated Bell too in eeprom.
         String key = "p" + String(selectedSched);
         Serial.printf("Key=%s\n",key.c_str());
         void *value = (void *)(&(schedules[selectedSched]));
         int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
         Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
+        //storing bell array.
+        String key2 = "pb"+String(selectedSched);
+        void* value2 = (void*)(tmp.bells);
+        int len2 = pref.putBytes(key2.c_str(),value2,sizeof(Bell)*tmp.bellCount);
+        Serial.printf("Stored Bells, %dbytes\n",len2);
         Serial.printf("Activating Schedule=%d\n",selectedSched);
         activeSchedIdx = selectedSched;
-        ProgSched tmp2;
-        int len2 = pref.getBytes(key.c_str(),&tmp2,sizeof(ProgSched));
-        Serial.printf("Retrived %d bytes\n",len2);
-        Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp2.id,tmp2.bellCount,tmp2.bells[0].hour,tmp2.bells[0].min,tmp2.bells[0].file);
-          
       }
     }
     delay(100);
@@ -922,15 +923,19 @@ void setup() {
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
   String key = "p1"; // treating 1st schedule as active.
-  void* tmp;
   int len = pref.getBytes(key.c_str(), &activeSchedule, pref.getBytesLength(key.c_str()));
   activeSchedPtr = &activeSchedule;
+  //retrieving bells
+  key = "pb1";
+ len = pref.getBytes(key.c_str(),&bellArr,sizeof(Bell)*activeSchedule.bellCount);
   if (len == 0) {
     Serial.println("No Schedule Stored");
   } else {
+    Serial.printf("Retrieved Bells &dBytes\n",len);
     schedFoundEeprom = true;
     activeBellCnt = 0;
     activeBellCount = activeSchedPtr->bellCount;
+    activeSchedule.bells = &bellArr[0];
     Serial.println("Schedule Retrieved");
     Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",activeSchedule.id,activeSchedule.bellCount,activeSchedule.bells[0].hour,activeSchedule.bells[0].min,activeSchedule.bells[0].file);
   }
