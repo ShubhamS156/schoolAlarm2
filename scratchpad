@@ -39,3 +39,4 @@ Get active schedule in setup() from eeprom according to day.
 Currently I'm making the 0th programmed schedule active.
 
 Change structure of porgSched to include an id.
+Make another thread for alarm , if in homescreen it wont check for alarm.

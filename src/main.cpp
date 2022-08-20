@@ -255,7 +255,7 @@ void keyChange() {
 /*------------tasks----------------------*/
 
 void handleHome() {
-  RtcDateTime now = rtc.GetDateTime();
+  RtcDateTime now;
   bool exit = false;
   int actionKey = -1;
   int keyPressed = 0;
@@ -264,6 +264,7 @@ void handleHome() {
   while (!exit) {
     xSemaphoreTake(lcdMutex, portMAX_DELAY);
     printFrame();
+    now = rtc.GetDateTime();
     drawHome(now);
     xSemaphoreGive(lcdMutex);
     if (ttp229.keyChange) {
