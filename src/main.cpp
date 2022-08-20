@@ -629,8 +629,8 @@ void handleProgSched() {
         Serial.printf("Activating Schedule=%d\n",selectedSched);
         activeSchedIdx = selectedSched;
         ProgSched tmp2;
-        int len = pref.getBytes(key.c_str(),&tmp2,sizeof(ProgSched));
-        Serial.printf("Retrived %d bytes\n",len);
+        int len2 = pref.getBytes(key.c_str(),&tmp2,sizeof(ProgSched));
+        Serial.printf("Retrived %d bytes\n",len2);
         Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp2.id,tmp2.bellCount,tmp2.bells[0].hour,tmp2.bells[0].min,tmp2.bells[0].file);
           
       }
