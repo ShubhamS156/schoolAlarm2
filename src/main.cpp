@@ -617,10 +617,11 @@ void handleProgSched() {
           clearLcd();
         }
         Serial.printf("Completed Sched=%d\n", selectedSched);
-        ProgSched activeSchedule = schedules[selectedSched];
-        Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",activeSchedule.id,activeSchedule.bellCount,activeSchedule.bells[0].hour,activeSchedule.bells[0].min,activeSchedule.bells[0].file);
+        ProgSched tmp = schedules[selectedSched];
+        Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp.id,tmp.bellCount,tmp.bells[0].hour,tmp.bells[0].min,tmp.bells[0].file);
         // TODO: store sched in eeprom here.
         String key = "p" + String(selectedSched);
+        Serial.printf("Key=%s\n",key.c_str());
         void *value = (void *)(&(schedules[selectedSched]));
         int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
         Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
@@ -934,36 +935,36 @@ void setup() {
 
 void loop() { delay(10000); }
 
-int keyPressCheck() {
-  int actionKey = -1;
-  int keyPressed = 0;
-  while (!exit) {
-    if (ttp229.keyChange) {
-      keyPressed = ttp229.GetKey16();
-      if (keyPressed != RELEASE) {
-        actionKey = keyPressed;
-        Serial.printf("actionKey=%d\n", actionKey);
-      } else {
-        if (actionKey != -1) {
-          switch (actionKey) {
-          case UP:
-            break;
-          case DOWN:
-            break;
-          case ENT:
-            break;
-          case MENU:
-            break;
-          case BACK:
-            break;
-          case DELETE:
-            break;
-          default:
-            break;
-          }
-          actionKey = -1;
-        }
-      }
-    }
-  }
-}
+// int keyPressCheck() {
+//   int actionKey = -1;
+//   int keyPressed = 0;
+//   while (!exit) {
+//     if (ttp229.keyChange) {
+//       keyPressed = ttp229.GetKey16();
+//       if (keyPressed != RELEASE) {
+//         actionKey = keyPressed;
+//         Serial.printf("actionKey=%d\n", actionKey);
+//       } else {
+//         if (actionKey != -1) {
+//           switch (actionKey) {
+//           case UP:
+//             break;
+//           case DOWN:
+//             break;
+//           case ENT:
+//             break;
+//           case MENU:
+//             break;
+//           case BACK:
+//             break;
+//           case DELETE:
+//             break;
+//           default:
+//             break;
+//           }
+//           actionKey = -1;
+//         }
+//       }
+//     }
+//   }
+// }
