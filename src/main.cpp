@@ -617,6 +617,8 @@ void handleProgSched() {
           clearLcd();
         }
         Serial.printf("Completed Sched=%d\n", selectedSched);
+        ProgSched activeSchedule = schedules[selectedSched];
+        Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",activeSchedule.id,activeSchedule.bellCount,activeSchedule.bells[0].hour,activeSchedule.bells[0].min,activeSchedule.bells[0].file);
         // TODO: store sched in eeprom here.
         String key = "p" + String(selectedSched);
         void *value = (void *)(&(schedules[selectedSched]));
@@ -912,7 +914,7 @@ void setup() {
   rtc.Enable32kHzPin(false);
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
-  String key = "p0"; // treating 0th schedule as active.
+  String key = "p1"; // treating 0th schedule as active.
   int len = pref.getBytes(key.c_str(), &activeSchedule, sizeof(ProgSched));
   activeSchedPtr = &activeSchedule;
   if (len == 0) {
