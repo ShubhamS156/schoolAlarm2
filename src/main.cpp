@@ -600,7 +600,6 @@ void handleProgSched() {
 
           int tmp = myDFPlayer.readFileCounts();
           //TODO: fix have to call readFileCounts twice to get true value. why?
-          Serial.printf("Tmp FileCount=%d\n",tmp);
           fileKey = getFile(0, myDFPlayer.readFileCounts(), "File-", 200);
           if (fileKey.first == MENU) {
             gotoRoot();
@@ -620,14 +619,20 @@ void handleProgSched() {
         Serial.printf("Completed Sched=%d\n", selectedSched);
         ProgSched tmp = schedules[selectedSched];
         Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp.id,tmp.bellCount,tmp.bells[0].hour,tmp.bells[0].min,tmp.bells[0].file);
+        Serial.printf("Bells addr:%p\n",tmp.bells);
         // TODO: store sched in eeprom here.
         String key = "p" + String(selectedSched);
         Serial.printf("Key=%s\n",key.c_str());
         void *value = (void *)(&(schedules[selectedSched]));
-        int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched)+(sizeof(Bell)*tmp.bellCount));
+        int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
         Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
         Serial.printf("Activating Schedule=%d\n",selectedSched);
         activeSchedIdx = selectedSched;
+        ProgSched tmp2;
+        int len = pref.getBytes(key.c_str(),&tmp2,sizeof(ProgSched));
+        Serial.printf("Retrived %d bytes\n",len);
+        Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp2.id,tmp2.bellCount,tmp2.bells[0].hour,tmp2.bells[0].min,tmp2.bells[0].file);
+          
       }
     }
     delay(100);
