@@ -510,6 +510,7 @@ void handleManualMode()
     {
       myDFPlayer.play(fileKey.second);
       Serial.printf("Playing File=%d\n", fileKey.second);
+      Serial.printf("mp3 pin state=%d\n",mp3busyPin);
     }
     delay(300);
   }
