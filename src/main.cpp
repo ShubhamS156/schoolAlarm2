@@ -1173,9 +1173,9 @@ void setup()
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
   String key = "mode";
+  int modeSchedIdx=0;
   int day = (now.DayOfWeek()-1)%7; //func returns 0 for sunday we have 0 for monday.
   int len = pref.getBytes(key.c_str(),&currentMode,sizeof(uint8_t));
-  int modeSchedIdx=0;
   Serial.printf("Got %dbytes\n",len);
   Serial.printf("Active Mode =%d\n",currentMode); 
   if(currentMode == SUMMER){
@@ -1201,11 +1201,12 @@ void setup()
   }
   //got index of schedule to activate today.
   key = "p"+String(modeSchedIdx);
-  len = pref.getBytes(key.c_str(), &activeSchedule,
-                          pref.getBytesLength(key.c_str()));
+  Serial.printf("Schedule key=%s\n",key.c_str());
+  len = pref.getBytes(key.c_str(), &activeSchedule,sizeof(ProgSched));
   activeSchedPtr = &activeSchedule;
   // retrieving bells
   key = "pb"+String(modeSchedIdx);
+  Serial.printf("Bell key=%s\n",key.c_str());
   len = pref.getBytes(key.c_str(), &bellArr,
                       sizeof(Bell) * activeSchedule.bellCount);
   if (len == 0)
