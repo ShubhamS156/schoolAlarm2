@@ -130,6 +130,15 @@ static bool schedFoundEeprom = false;
 static bool todayHoliday = false;
 int activeBellCount = 0;
 int activeBellCnt = 0;
+
+/*----------HW Pins-----------*/
+int touchLedPin = 2;
+int relayAmpPin = 12;
+int relayMicPin = 14;
+int errBuzPin = 15;
+int mp3busyPin = 34;
+int micActivatePin = 13;
+
 /*------------util funcs-----------------*/
 void createCustomCharacters()
 {
@@ -960,6 +969,7 @@ void keyPressTask(void *pvParameters)
   int actionKey = -1;
   int keyPressed = 0;
   int len = 0;
+  int mp3State;
   void *value;
   while (1)
   {
@@ -968,11 +978,13 @@ void keyPressTask(void *pvParameters)
       keyPressed = ttp229.GetKey16();
       if (keyPressed != RELEASE)
       {
+        digitalWrite(touchLedPin, HIGH);
         actionKey = keyPressed;
         Serial.printf("actionKey=%d\n", actionKey);
       }
       else
       {
+        digitalWrite(touchLedPin,LOW);
         if (actionKey != -1)
         {
           switch (actionKey)
@@ -1173,9 +1185,9 @@ void keyPressTask(void *pvParameters)
               case mnuCmdSecondSat:
                 checkSecondSat = !checkSecondSat;
                 pref.putBool(SATCHKKEY, checkSecondSat);
-                Serial.printf("SecondSat=%d\n",checkSecondSat);
+                Serial.printf("SecondSat=%d\n", checkSecondSat);
                 clearLcd();
-                xSemaphoreTake(lcdMutex,portMAX_DELAY);
+                xSemaphoreTake(lcdMutex, portMAX_DELAY);
                 if (checkSecondSat)
                 {
                   lcd.print("Second Sat ON");
@@ -1184,7 +1196,7 @@ void keyPressTask(void *pvParameters)
                 {
                   lcd.print("Second Sat OFF");
                 }
-                vTaskDelay(500/portTICK_PERIOD_MS);
+                vTaskDelay(500 / portTICK_PERIOD_MS);
                 xSemaphoreGive(lcdMutex);
                 clearLcd();
                 printSelected();
@@ -1223,6 +1235,23 @@ void keyPressTask(void *pvParameters)
           }
           actionKey = -1;
         }
+      }
+      // hw checks
+      mp3State = digitalRead(mp3busyPin);
+      if (mp3State == HIGH)
+      {
+        digitalWrite(relayAmpPin, HIGH);
+        digitalWrite(relayMicPin, HIGH);
+        digitalWrite(micActivatePin, HIGH);
+        digitalWrite(errBuzPin, LOW);
+      }
+      else
+      {
+        digitalWrite(relayAmpPin, HIGH);
+        digitalWrite(relayMicPin, LOW);
+        digitalWrite(errBuzPin, HIGH);
+        delay(500);
+        digitalWrite(errBuzPin, LOW);
       }
       vTaskDelay(200 / portTICK_PERIOD_MS);
     }
@@ -1283,6 +1312,14 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println("Starting");
+
+  /*-----------Hw Pins------------*/
+  pinMode(touchLedPin, OUTPUT);
+  pinMode(relayAmpPin, OUTPUT);
+  pinMode(relayMicPin, OUTPUT);
+  pinMode(micActivatePin, OUTPUT);
+  pinMode(errBuzPin, OUTPUT);
+  pinMode(mp3busyPin, INPUT);
   /*-----------Preferences---------*/
   pref.begin("alarm");
 
@@ -1449,38 +1486,7 @@ void setup()
   xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
 }
 
-void loop() { delay(10000); }
-
-// int keyPressCheck() {
-//   int actionKey = -1;
-//   int keyPressed = 0;
-//   while (!exit) {
-//     if (ttp229.keyChange) {
-//       keyPressed = ttp229.GetKey16();
-//       if (keyPressed != RELEASE) {
-//         actionKey = keyPressed;
-//         Serial.printf("actionKey=%d\n", actionKey);
-//       } else {
-//         if (actionKey != -1) {
-//           switch (actionKey) {
-//           case UP:
-//             break;
-//           case DOWN:
-//             break;
-//           case ENT:
-//             break;
-//           case MENU:
-//             break;
-//           case BACK:
-//             break;
-//           case DELETE:
-//             break;
-//           default:
-//             break;
-//           }
-//           actionKey = -1;
-//         }
-//       }
-//     }
-//   }
-// }
+void loop()
+{
+  delay(10000);
+}
