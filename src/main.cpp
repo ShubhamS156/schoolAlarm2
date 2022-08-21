@@ -1160,22 +1160,29 @@ void keyPressTask(void *pvParameters)
                 daySchedHandler(EXAM, SUNDAY);
                 Serial.println("Exit");
                 break;
-              case mnuCmdOff:
-                checkSecondSat = false;
-                pref.putBool(SATCHKKEY, checkSecondSat);
-                Serial.println("SecondSat Check Off");
-                clearLcd();
-                lcd.print("Second Sat OFF");
-                clearLcd();
-                printSelected();
-                Serial.println("Exit");
-                break;
+                // case mnuCmdOff:
+                //   checkSecondSat = false;
+                //   pref.putBool(SATCHKKEY, checkSecondSat);
+                //   Serial.println("SecondSat Check Off");
+                //   clearLcd();
+                //   lcd.print("Second Sat OFF");
+                //   clearLcd();
+                //   printSelected();
+                //   Serial.println("Exit");
+                //   break;
               case mnuCmdSecondSat:
-                checkSecondSat = true;
+                checkSecondSat = !checkSecondSat;
                 pref.putBool(SATCHKKEY, checkSecondSat);
                 Serial.println("SecondSat Check ON");
                 clearLcd();
-                lcd.print("Second Sat ON");
+                if (checkSecondSat)
+                {
+                  lcd.print("Second Sat ON");
+                }
+                else
+                {
+                  lcd.print("Second Sat OFF");
+                }
                 clearLcd();
                 printSelected();
                 Serial.println("Exit");
