@@ -1509,6 +1509,7 @@ void loop()
   {
     digitalWrite(relayAmpPin, HIGH);
     digitalWrite(relayMicPin, LOW);
+    digitalWrite(micActivatePin,LOW);
     digitalWrite(errBuzPin, HIGH);
     delay(500);
     digitalWrite(errBuzPin, LOW);
