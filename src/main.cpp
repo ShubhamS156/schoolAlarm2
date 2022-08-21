@@ -167,13 +167,13 @@ void printSelected()
   else
   {
     // print the selected and above 3
-    lcd.clear();
     for (int i = obj.getCurrentItemIndex() - 3; i <= obj.getCurrentItemIndex();
          i++)
     {
       lcd.print(curr[i].name);
       lcd.setCursor(0, counter++);
     }
+    lcd.clear();
     lcd.setCursor(0, 3);
   }
   xSemaphoreGive(lcdMutex);
