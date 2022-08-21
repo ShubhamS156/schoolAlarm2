@@ -32,8 +32,8 @@
 #define ZERO 14
 #define BACK 15
 #define ENT 16
-#define PROGSCHEDSIZE 24
-#define BELLCOUNTMAX 50
+#define PROGSCHEDSIZE 50
+#define BELLCOUNTMAX 15
 
 /*--------------structs----------------*/
 typedef struct {
