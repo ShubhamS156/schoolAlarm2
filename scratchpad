@@ -20,7 +20,10 @@ displayed.
 every mode will have its own handler, which will take care of writing and clearing lcd.
 
 ->on pressing back, i think currently it is going to the root of the parent menu, instead make it go to the menu item from where it entered the child menu
--? figure out a way to start homescreen by default
+
+-> figure out a way to start homescreen by default
+======for this I'll call handleHome() before creating keyPress detection task, after handleHome() returns keyPress will be created.
+
 -> goto homescreen after mode select| check if this works now
 
 ->make util functions thread safe
@@ -36,7 +39,12 @@ Get active schedule in setup() from eeprom according to day.
     If yes we're done for the day,
     Else Repeat from line 41.
 
-Currently I'm making the 0th programmed schedule active.
+Currently I'm making the 1st programmed schedule active.
 
-Change structure of porgSched to include an id.
+Change structure of porgSched to include an id. DONE.
+
 Make another thread for alarm , if in homescreen it wont check for alarm.
+
+After we're done for the day activate the next schedule.
+
+FirstApproach-> we load the schedule at boot, after we're completed with one schedule we restart the device and hence the next schedule loaded automatically.

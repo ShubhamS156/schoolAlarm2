@@ -285,13 +285,13 @@ void handleHome() {
           case ENT:
             break;
           case MENU:
-            //currentItem = mnuCmdManual; // exit flag
+            // currentItem = mnuCmdManual; // exit flag
             exit = true;
             break;
           case BACK:
             break;
           case DELETE:
-            Serial.printf("Erasing Prefs: %d\n",pref.clear());
+            Serial.printf("Erasing Prefs: %d\n", pref.clear());
             break;
           default:
             break;
@@ -328,7 +328,7 @@ Pair getFile(int min, int fileCount, String msg, int delayMs) {
     lcd.clear();
     lcd.blink_off();
     lcd.setCursor(0, 0);
-    lcd.print(msg+String(min));
+    lcd.print(msg + String(min));
     while (!exit) {
       if (ttp229.keyChange) {
         keyPressed = ttp229.GetKey16();
@@ -582,7 +582,7 @@ void handleProgSched() {
           Serial.printf("Processing Sched=%d, Bell=%d\n", selectedSched,
                         currBellCnt);
           Pair timeKey, fileKey;
-          String msg = "Set time for Bell="+String(currBellCnt);
+          String msg = "Set time for Bell=" + String(currBellCnt);
           timeKey = getDateTime(msg);
           if (timeKey.first == MENU) {
             gotoRoot();
@@ -599,8 +599,8 @@ void handleProgSched() {
                           timeKey.second, selectedSched, currBellCnt);
           }
 
-          int tmp = myDFPlayer.readFileCounts();
-          //TODO: fix have to call readFileCounts twice to get true value. why?
+          myDFPlayer.readFileCounts();
+          // TODO: fix have to call readFileCounts twice to get true value. why?
           fileKey = getFile(0, myDFPlayer.readFileCounts(), "File-", 200);
           if (fileKey.first == MENU) {
             gotoRoot();
@@ -619,21 +619,24 @@ void handleProgSched() {
         }
         Serial.printf("Completed Sched=%d\n", selectedSched);
         ProgSched tmp = schedules[selectedSched];
-        Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",tmp.id,tmp.bellCount,tmp.bells[0].hour,tmp.bells[0].min,tmp.bells[0].file);
+        Serial.printf(
+            "Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",
+            tmp.id, tmp.bellCount, tmp.bells[0].hour, tmp.bells[0].min,
+            tmp.bells[0].file);
         // TODO: store sched in eeprom here.
-        //we have to store the data in dynamically allocated Bell too in eeprom.
+        // we have to store the data in dynamically allocated Bell too in
+        // eeprom.
         String key = "p" + String(selectedSched);
-        Serial.printf("Key=%s\n",key.c_str());
+        Serial.printf("Key=%s\n", key.c_str());
         void *value = (void *)(&(schedules[selectedSched]));
         int len = pref.putBytes(key.c_str(), value, sizeof(ProgSched));
         Serial.printf("Stored %d Bytes for %d\n", len, selectedSched);
-        //storing bell array.
-        String key2 = "pb"+String(selectedSched);
-        void* value2 = (void*)(tmp.bells);
-        int len2 = pref.putBytes(key2.c_str(),value2,sizeof(Bell)*tmp.bellCount);
-        Serial.printf("Stored Bells, %dbytes\n",len2);
-        Serial.printf("Activating Schedule=%d\n",selectedSched);
-        activeSchedIdx = selectedSched;
+        // storing bell array.
+        String key2 = "pb" + String(selectedSched);
+        void *value2 = (void *)(tmp.bells);
+        int len2 =
+            pref.putBytes(key2.c_str(), value2, sizeof(Bell) * tmp.bellCount);
+        Serial.printf("Stored Bells, %dbytes\n", len2);
       }
     }
     delay(100);
@@ -642,13 +645,12 @@ void handleProgSched() {
   printSelected();
 }
 
-void keyPressAndAlarmTask(void *pvParameters) {
+/*--------------------------Tasks-----------------------*/
+void keyPressTask(void *pvParameters) {
   printSelected();
   Serial.println("Starting Key Press Detection");
   int actionKey = -1;
   int keyPressed = 0;
-  int prevAlarmCheck = 0;
-  static RtcDateTime now;
   while (1) {
     if (ttp229.keyChange) {
       keyPressed = ttp229.GetKey16();
@@ -754,11 +756,20 @@ void keyPressAndAlarmTask(void *pvParameters) {
     }
     // after detecting key
     // check every 30 seconds for time.
-    if (schedFoundEeprom && millis() - prevAlarmCheck > 30000) {
+  }
+  // TODO: why this?
+  vTaskDelete(NULL);
+}
+
+void alarmTask(void *pvParameters) {
+  RtcDateTime now;
+  int prevAlarmCheck = 0;
+  while (1) {
+    if (schedFoundEeprom) {
       Serial.printf("Checking for Schedule=%d, Bell=%d\n", activeSchedPtr->id,
                     activeBellCnt);
       now = rtc.GetDateTime();
-      Serial.printf("%d:%d\n",now.Hour(),now.Minute());
+      Serial.printf("%d:%d\n", now.Hour(), now.Minute());
       prevAlarmCheck = millis();
       if (activeSchedPtr->bells[activeBellCnt].hour == now.Hour() &&
           activeSchedPtr->bells[activeBellCnt].min == now.Minute()) {
@@ -768,97 +779,10 @@ void keyPressAndAlarmTask(void *pvParameters) {
         activeBellCnt++;
       }
     }
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
   }
-  // TODO: why this?
   vTaskDelete(NULL);
 }
-// void keyPressTask(void *pvParameters) {
-//   Serial.println("Starting KeyPress Detection");
-//   int currId;
-//   int actionKey = -1; // undefined, used to check which key is pressed.
-//   int keyPressed = 0; // released
-//   while (1) {
-//     if (ttp229.keyChange) {
-//       keyPressed = ttp229.GetKey16();
-//       if (keyPressed != RELEASE) {
-//         actionKey = keyPressed;
-//         Serial.printf("key-pressed=%d\n", actionKey);
-//       } else {
-//         if (actionKey != -1) {
-//           /* key handling start */
-//           if (actionKey == UP) {
-//             Serial.println("UP pressed");
-//             switch (currentItem) { // TODO: add cases to this block to add
-//                                    // meaning to UP
-//             case mnuCmdHome:
-//               break;
-//             default:
-//               // if there is item to move to
-//               if (obj.moveToPreviousItem()) {
-//                 currentItem = obj.getCurrentItemCmdId();
-//                 printSelected(); // print the updates
-//                 Serial.println("Going up");
-//               } else {
-//                 Serial.print("cant go up");
-//               }
-//               break;
-//             }
-//           } else if (actionKey == DOWN) {
-//             switch (currentItem) { // TODO: add case here for key DOWN.
-//             case mnuCmdHome:
-//               break;
-//             default:
-//               if (obj.moveToNextItem()) {
-//                 currentItem = obj.getCurrentItemCmdId();
-//                 printSelected();
-//                 Serial.println("Going down");
-//               } else {
-//                 Serial.println("cant go down");
-//               }
-//               break;
-//             }
-//           } else if (actionKey == ENT) {
-//             switch (currentItem) {
-//             case mnuCmdHome:
-//               Serial.println("entering home");
-//               // loopFlag = mnuCmdHome;
-//               break;
-//             case mnuCmdManual:
-//               lcd.clear();
-//               Serial.println("Entering manual mode");
-//               lcd.print("entered manual mode");
-//               break;
-//             case mnuCmdModeSelect:
-//               Serial.print("entered mode selection");
-//               lcd.clear();
-//               lcd.print("mode select");
-//               break;
-//             default:
-//               if (obj.currentItemHasChildren()) {
-//                 obj.descendToChildMenu();
-//                 lcd.clear();
-//                 printSelected();
-//               }
-//               break;
-//             }
-//           } else if (actionKey == BACK) {
-//             switch (currentItem) {
-//             case mnuCmdHome:
-//               lcd.clear();
-//               currentItem = mnuCmdManual;
-//               printSelected();
-//             default:
-//               break;
-//             }
-//           }
-//           actionKey = -1; // clear the action key.
-//         }
-//       }
-//     }
-//     vTaskDelay(300 / portTICK_PERIOD_MS);
-//   }
-//   vTaskDelete(NULL);
-// }
 /*--------------------freertos tasks--------------------*/
 
 void setup() {
@@ -923,26 +847,35 @@ void setup() {
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
   String key = "p1"; // treating 1st schedule as active.
-  int len = pref.getBytes(key.c_str(), &activeSchedule, pref.getBytesLength(key.c_str()));
+  int len = pref.getBytes(key.c_str(), &activeSchedule,
+                          pref.getBytesLength(key.c_str()));
   activeSchedPtr = &activeSchedule;
-  //retrieving bells
+  // retrieving bells
   key = "pb1";
- len = pref.getBytes(key.c_str(),&bellArr,sizeof(Bell)*activeSchedule.bellCount);
+  len = pref.getBytes(key.c_str(), &bellArr,
+                      sizeof(Bell) * activeSchedule.bellCount);
   if (len == 0) {
     Serial.println("No Schedule Stored");
   } else {
-    Serial.printf("Retrieved Bells &dBytes\n",len);
+    Serial.printf("Retrieved Bells &dBytes\n", len);
     schedFoundEeprom = true;
     activeBellCnt = 0;
     activeBellCount = activeSchedPtr->bellCount;
     activeSchedule.bells = &bellArr[0];
     Serial.println("Schedule Retrieved");
-    Serial.printf("Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",activeSchedule.id,activeSchedule.bellCount,activeSchedule.bells[0].hour,activeSchedule.bells[0].min,activeSchedule.bells[0].file);
+    Serial.printf(
+        "Schedule=> Id=%d, BellCount=%d, FirstBell=%d:%d FirstFile=%d\n",
+        activeSchedule.id, activeSchedule.bellCount,
+        activeSchedule.bells[0].hour, activeSchedule.bells[0].min,
+        activeSchedule.bells[0].file);
   }
-  /*-----------Tasks-----------------*/
-  xTaskCreate(keyPressAndAlarmTask, "keyPressAlarm", 4096, NULL, 3, NULL);
-  // starting homescreen by default
-  // handleHome();
+
+  /*--------Alarm Task---------------*/
+  xTaskCreate(alarmTask, "alarm", 1024, NULL, 2, NULL);
+  /*---------homescreen by default---------*/
+  handleHome();
+  /*-----------Keypress Task-----------------*/
+  xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
 }
 
 void loop() { delay(10000); }
