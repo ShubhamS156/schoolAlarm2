@@ -1173,7 +1173,7 @@ void keyPressTask(void *pvParameters)
               case mnuCmdSecondSat:
                 checkSecondSat = !checkSecondSat;
                 pref.putBool(SATCHKKEY, checkSecondSat);
-                Serial.println("SecondSat=%d\n",checkSecondSat);
+                Serial.printf("SecondSat=%d\n",checkSecondSat);
                 clearLcd();
                 xSemaphoreTake(lcdMutex,portMAX_DELAY);
                 if (checkSecondSat)
