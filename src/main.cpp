@@ -437,10 +437,10 @@ Pair getFile(int min, int fileCount, String msg, int delayMs)
     {
       if (ttp229.keyChange)
       {
-        digitalWrite(touchLedPin,HIGH);
         keyPressed = ttp229.GetKey16();
         if (keyPressed != RELEASE)
         {
+          digitalWrite(touchLedPin,HIGH);
           actionKey = keyPressed;
           Serial.printf("actionKey=%d\n", actionKey);
         }
@@ -568,10 +568,10 @@ Pair getDateTime(String msg)
   {
     if (ttp229.keyChange)
     {
-      digitalWrite(touchLedPin,HIGH);
       keyPressed = ttp229.GetKey16();
       if (keyPressed != RELEASE)
       {
+        digitalWrite(touchLedPin,HIGH);
         actionKey = keyPressed;
         Serial.printf("actionKey=%d\n", actionKey);
       }
