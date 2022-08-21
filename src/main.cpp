@@ -1476,7 +1476,7 @@ void loop()
   int mp3State = digitalRead(mp3busyPin);
   if (mp3State == HIGH)
   {
-    digitalWrite(relayAmpPin, HIGH);
+    digitalWrite(relayAmpPin, LOW);
     digitalWrite(relayMicPin, HIGH);
     digitalWrite(micActivatePin, HIGH);
     digitalWrite(errBuzPin, LOW);
