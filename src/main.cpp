@@ -1235,7 +1235,7 @@ void alarmTask(void *pvParameters)
     if (schedFoundEeprom)
     {
       // checking for 2nd saturday.
-      if (now.Day() > 7 && now.Day() <= 14 && now.DayOfWeek() == 6)
+      if (checkSecondSat && now.Day() > 7 && now.Day() <= 14 && now.DayOfWeek() == 6)
       {
         // DayOfWeek = 6 if Saturday.
         Serial.println("Second Saturday");
