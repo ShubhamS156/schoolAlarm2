@@ -48,3 +48,7 @@ Make another thread for alarm , if in homescreen it wont check for alarm.
 After we're done for the day activate the next schedule.
 
 FirstApproach-> we load the schedule at boot, after we're completed with one schedule we restart the device and hence the next schedule loaded automatically.
+
+Implement-> second saturday
+Implement-> take date as input, declare holiday for that date. after it is processed remove it from eeprom.
+Implement-> take date in SetDateTime
