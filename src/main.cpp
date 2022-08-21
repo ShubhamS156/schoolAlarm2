@@ -1321,7 +1321,6 @@ void setup()
   pinMode(micActivatePin, OUTPUT);
   pinMode(errBuzPin, OUTPUT);
   pinMode(mp3busyPin, INPUT);
-  digitalWrite(relayAmpPin,LOW);
   /*-----------Preferences---------*/
   pref.begin("alarm");
 
