@@ -56,7 +56,7 @@ Implement-> take date as input, declare holiday for that date. after it is proce
 Implement-> take date in SetDateTime
 Implement-> Clear all Schedules
             Clear all Holidays.
-
+Implement->if today is holiday after restart it'll treat as not holiday , so dont clear pref instantly ,clear at midnight.
 
 Implement-> restart at every midnight.
 Implement-> store idx of bell processing in eprom, reset this after the schedule is done, if current time > this bell then increment the bell until now is less the the bell to process.

@@ -1184,6 +1184,7 @@ void keyPressTask(void *pvParameters)
                 {
                   lcd.print("Second Sat OFF");
                 }
+                vTaskDelay(500/portTICK_PERIOD_MS);
                 xSemaphoreGive(lcdMutex);
                 clearLcd();
                 printSelected();
