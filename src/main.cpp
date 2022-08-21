@@ -948,6 +948,8 @@ void handleProgHoliday()
   {
     Serial.println("Failed to Program Holiday");
   }
+  clearLcd();
+  printSelected();
 }
 /*--------------------------Tasks-----------------------*/
 void keyPressTask(void *pvParameters)
