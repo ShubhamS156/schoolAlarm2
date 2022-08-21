@@ -82,13 +82,13 @@ const MenuItem sampleMenu_List_4_2[] = {
     {mnuCmdTotalBell, sampleMenu_4_2_2},
     {mnuCmdBack, sampleMenu_back}};
 
-const char sampleMenu_4_3_1[] = "4.3.1 Monday";
-const char sampleMenu_4_3_2[] = "4.3.2 Tuesday";
-const char sampleMenu_4_3_3[] = "4.3.3 Wednesday";
-const char sampleMenu_4_3_4[] = "4.3.4 Thursday";
-const char sampleMenu_4_3_5[] = "4.3.5 Friday";
-const char sampleMenu_4_3_6[] = "4.3.6 Saturday";
-const char sampleMenu_4_3_7[] = "4.3.7 Sunday";
+const char sampleMenu_4_3_1[] = " Monday";
+const char sampleMenu_4_3_2[] = " Tuesday";
+const char sampleMenu_4_3_3[] = " Wednesday";
+const char sampleMenu_4_3_4[] = " Thursday";
+const char sampleMenu_4_3_5[] = " Friday";
+const char sampleMenu_4_3_6[] = " Saturday";
+const char sampleMenu_4_3_7[] = " Sunday";
 const MenuItem sampleMenu_List_4_3[] = {
     {mnuCmdSumMon, sampleMenu_4_3_1}, {mnuCmdSumTue, sampleMenu_4_3_2},
     {mnuCmdSumWed, sampleMenu_4_3_3}, {mnuCmdSumThu, sampleMenu_4_3_4},
