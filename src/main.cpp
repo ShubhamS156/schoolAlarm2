@@ -167,6 +167,7 @@ void printSelected()
   else
   {
     // print the selected and above 3
+    lcd.clear();
     for (int i = obj.getCurrentItemIndex() - 3; i <= obj.getCurrentItemIndex();
          i++)
     {
