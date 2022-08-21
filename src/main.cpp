@@ -510,7 +510,7 @@ void handleManualMode()
     {
       myDFPlayer.play(fileKey.second);
       Serial.printf("Playing File=%d\n", fileKey.second);
-      Serial.printf("mp3 pin state=%d\n",digitalRead(mp3busyPin));
+      Serial.printf("mp3 pin state=%d\n", digitalRead(mp3busyPin));
     }
     delay(300);
   }
@@ -985,7 +985,7 @@ void keyPressTask(void *pvParameters)
       }
       else
       {
-        digitalWrite(touchLedPin,LOW);
+        digitalWrite(touchLedPin, LOW);
         if (actionKey != -1)
         {
           switch (actionKey)
@@ -1238,22 +1238,6 @@ void keyPressTask(void *pvParameters)
         }
       }
       // hw checks
-      mp3State = digitalRead(mp3busyPin);
-      if (mp3State == HIGH)
-      {
-        digitalWrite(relayAmpPin, HIGH);
-        digitalWrite(relayMicPin, HIGH);
-        digitalWrite(micActivatePin, HIGH);
-        digitalWrite(errBuzPin, LOW);
-      }
-      else
-      {
-        digitalWrite(relayAmpPin, HIGH);
-        digitalWrite(relayMicPin, LOW);
-        digitalWrite(errBuzPin, HIGH);
-        delay(500);
-        digitalWrite(errBuzPin, LOW);
-      }
       vTaskDelay(200 / portTICK_PERIOD_MS);
     }
     // after detecting key
@@ -1489,5 +1473,21 @@ void setup()
 
 void loop()
 {
-  delay(10000);
+  int mp3State = digitalRead(mp3busyPin);
+  if (mp3State == HIGH)
+  {
+    digitalWrite(relayAmpPin, HIGH);
+    digitalWrite(relayMicPin, HIGH);
+    digitalWrite(micActivatePin, HIGH);
+    digitalWrite(errBuzPin, LOW);
+  }
+  else
+  {
+    digitalWrite(relayAmpPin, HIGH);
+    digitalWrite(relayMicPin, LOW);
+    digitalWrite(errBuzPin, HIGH);
+    delay(500);
+    digitalWrite(errBuzPin, LOW);
+  }
+  delay(500);
 }
