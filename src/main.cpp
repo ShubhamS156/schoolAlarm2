@@ -631,6 +631,78 @@ Pair getDateTime(String msg)
   xSemaphoreGive(lcdMutex);
   return returnKey;
 }
+bool getDate(uint8_t *buff)
+{
+  // get 3int: year,month,date ,store in buff.
+  uint8_t YEAR = 0, MONTH = 1, DAY = 2;
+  Pair yearKey = getFile(22, 99, "Year=20", 200);
+  if (yearKey.first == MENU)
+  {
+    gotoRoot();
+    return false;
+  }
+  else if (yearKey.first == BACK)
+  {
+    clearLcd();
+    printSelected();
+    return false;
+  }
+  else if (yearKey.first == ENT)
+  {
+    buff[YEAR] = yearKey.second;
+    Serial.printf("Year=%d\n", buff[YEAR]);
+  }
+  else
+  {
+    Serial.println("Error in Retrieving Year\n");
+  }
+
+  Pair monthKey = getFile(1, 12, "Month=", 200);
+  if (monthKey.first == MENU)
+  {
+    gotoRoot();
+    return false;
+  }
+  else if (monthKey.first == BACK)
+  {
+    clearLcd();
+    printSelected();
+    return false;
+  }
+  else if (monthKey.first == ENT)
+  {
+    buff[MONTH] = monthKey.second;
+    Serial.printf("Month=%d\n", buff[MONTH]);
+  }
+  else
+  {
+    Serial.println("Error in Retrieving Month\n");
+  }
+
+  Pair dayKey = getFile(1, 31, "Day=", 200);
+  if (dayKey.first == MENU)
+  {
+    gotoRoot();
+    return false;
+  }
+  else if (dayKey.first == BACK)
+  {
+    clearLcd();
+    printSelected();
+    return false;
+  }
+  else if (dayKey.first == ENT)
+  {
+    buff[DAY] = dayKey.second;
+    Serial.printf("Day=%d\n", buff[DAY]);
+  }
+  else
+  {
+    Serial.println("Error in Retrieving Day\n");
+  }
+
+  return true;
+}
 void handleSetDateTime()
 {
   RtcDateTime now;
@@ -855,78 +927,6 @@ void daySchedHandler(int mode, int day)
         ELSE
         False
 */
-bool getDate(uint8_t *buff)
-{
-  // get 3int: year,month,date ,store in buff.
-  uint8_t YEAR = 0, MONTH = 1, DAY = 2;
-  Pair yearKey = getFile(22, 99, "Year=20", 200);
-  if (yearKey.first == MENU)
-  {
-    gotoRoot();
-    return false;
-  }
-  else if (yearKey.first == BACK)
-  {
-    clearLcd();
-    printSelected();
-    return false;
-  }
-  else if (yearKey.first == ENT)
-  {
-    buff[YEAR] = yearKey.second;
-    Serial.printf("Year=%d\n", buff[YEAR]);
-  }
-  else
-  {
-    Serial.println("Error in Retrieving Year\n");
-  }
-
-  Pair monthKey = getFile(1, 12, "Month=", 200);
-  if (monthKey.first == MENU)
-  {
-    gotoRoot();
-    return false;
-  }
-  else if (monthKey.first == BACK)
-  {
-    clearLcd();
-    printSelected();
-    return false;
-  }
-  else if (monthKey.first == ENT)
-  {
-    buff[MONTH] = monthKey.second;
-    Serial.printf("Month=%d\n", buff[MONTH]);
-  }
-  else
-  {
-    Serial.println("Error in Retrieving Month\n");
-  }
-
-  Pair dayKey = getFile(1, 31, "Day=", 200);
-  if (dayKey.first == MENU)
-  {
-    gotoRoot();
-    return false;
-  }
-  else if (dayKey.first == BACK)
-  {
-    clearLcd();
-    printSelected();
-    return false;
-  }
-  else if (dayKey.first == ENT)
-  {
-    buff[DAY] = dayKey.second;
-    Serial.printf("Day=%d\n", buff[DAY]);
-  }
-  else
-  {
-    Serial.println("Error in Retrieving Day\n");
-  }
-
-  return true;
-}
 void handleProgHoliday()
 {
   // we have to get 3 numbers using getFile()
@@ -1227,8 +1227,8 @@ void alarmTask(void *pvParameters)
   while (1)
   {
     now = rtc.GetDateTime();
-    //if midnight restart.
-    
+    // if midnight restart.
+
     if (schedFoundEeprom)
     {
       // checking for 2nd saturday.
@@ -1410,10 +1410,11 @@ void setup()
 
   /*---------Retrieve Holiday using Today's key if possible----------*/
   int month = now.Month();
-  int day = now.Day();
-  String key = String(month) + String(day);
+  day = now.Day();
+  key = "";
+  key = String(month) + String(day);
   uint8_t buf[3];
-  int len = pref.getBytes(key.c_str(), &buf, sizeof(buf));
+  len = pref.getBytes(key.c_str(), &buf, sizeof(buf));
   if (len > 0)
   {
     Serial.println("Today is Holiday");
