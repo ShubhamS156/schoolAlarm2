@@ -160,9 +160,9 @@ const MenuItem sampleMenu_List_3[] = {{mnuCmdSummer, sampleMenu_3_1},
 
 const char sampleMenu_4_1[] = " SET DATE TIME";
 const char sampleMenu_4_2[] = " PROGRAM SCHEDULE";
-const char sampleMenu_4_3[] = " SUMMER WORK DAYS";
-const char sampleMenu_4_4[] = " WINTER WORK DAYS";
-const char sampleMenu_4_5[] = " EXAM WORK DAYS";
+const char sampleMenu_4_3[] = " SUMMER ";
+const char sampleMenu_4_4[] = " WINTER ";
+const char sampleMenu_4_5[] = " EXAM ";
 const char sampleMenu_4_6[] = " SECOND SAT";
 const char sampleMenu_4_7[] = " PROGRAM HOLIDAY";
 const MenuItem sampleMenu_List_4[] = {
