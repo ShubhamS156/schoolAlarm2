@@ -122,35 +122,32 @@ const MenuItem sampleMenu_List_4_5[] = {
     {mnuCmdExSun, sampleMenu_4_5_7}, {mnuCmdBack, sampleMenu_back}};
 
 const char sampleMenu_4_6_1[] = " Off";
-const char sampleMenu_4_6_2[] = " Last Day of Month";
-const char sampleMenu_4_6_3[] = " Second Saturday";
-const char sampleMenu_4_6_4[] = " Select Date";
+const char sampleMenu_4_6_2[] = " Second Saturday";
+//const char sampleMenu_4_6_3[] = " Saturday";
+//const char sampleMenu_4_6_4[] = " Select Date";
 const MenuItem sampleMenu_List_4_6[] = {{mnuCmdOff, sampleMenu_4_6_1},
-                                        {mnuCmdLastDay, sampleMenu_4_6_2},
-                                        {mnuCmdSecondSat, sampleMenu_4_6_3},
-                                        {mnuCmdDate, sampleMenu_4_6_4},
-                                        {mnuCmdBack, sampleMenu_back}};
+                                        {mnuCmdSecondSat, sampleMenu_4_6_2}};
 
-const char sampleMenu_4_7_1[] = " Jan";
-const char sampleMenu_4_7_2[] = " Feb";
-const char sampleMenu_4_7_3[] = " March";
-const char sampleMenu_4_7_4[] = " Apr";
-const char sampleMenu_4_7_5[] = " May";
-const char sampleMenu_4_7_6[] = " Jun";
-const char sampleMenu_4_7_7[] = " Jul";
-const char sampleMenu_4_7_8[] = " Aug";
-const char sampleMenu_4_7_9[] = " Sep";
-const char sampleMenu_4_7_10[] = " Oct";
-const char sampleMenu_4_7_11[] = " Nov";
-const char sampleMenu_4_7_12[] = " Dec";
-const MenuItem sampleMenu_List_4_7[] = {
-    {mnuCmdJan, sampleMenu_4_7_1},   {mnuCmdFeb, sampleMenu_4_7_2},
-    {mnuCmdMarch, sampleMenu_4_7_3}, {mnuCmdApr, sampleMenu_4_7_4},
-    {mnuCmdMay, sampleMenu_4_7_5},   {mnuCmdJun, sampleMenu_4_7_6},
-    {mnuCmdJul, sampleMenu_4_7_7},   {mnuCmdAug, sampleMenu_4_7_8},
-    {mnuCmdSep, sampleMenu_4_7_9},   {mnuCmdOct, sampleMenu_4_7_10},
-    {mnuCmdNov, sampleMenu_4_7_11},  {mnuCmdDec, sampleMenu_4_7_12},
-    {mnuCmdBack, sampleMenu_back}};
+// const char sampleMenu_4_7_1[] = " Jan";
+// const char sampleMenu_4_7_2[] = " Feb";
+// const char sampleMenu_4_7_3[] = " March";
+// const char sampleMenu_4_7_4[] = " Apr";
+// const char sampleMenu_4_7_5[] = " May";
+// const char sampleMenu_4_7_6[] = " Jun";
+// const char sampleMenu_4_7_7[] = " Jul";
+// const char sampleMenu_4_7_8[] = " Aug";
+// const char sampleMenu_4_7_9[] = " Sep";
+// const char sampleMenu_4_7_10[] = " Oct";
+// const char sampleMenu_4_7_11[] = " Nov";
+// const char sampleMenu_4_7_12[] = " Dec";
+// const MenuItem sampleMenu_List_4_7[] = {
+//     {mnuCmdJan, sampleMenu_4_7_1},   {mnuCmdFeb, sampleMenu_4_7_2},
+//     {mnuCmdMarch, sampleMenu_4_7_3}, {mnuCmdApr, sampleMenu_4_7_4},
+//     {mnuCmdMay, sampleMenu_4_7_5},   {mnuCmdJun, sampleMenu_4_7_6},
+//     {mnuCmdJul, sampleMenu_4_7_7},   {mnuCmdAug, sampleMenu_4_7_8},
+//     {mnuCmdSep, sampleMenu_4_7_9},   {mnuCmdOct, sampleMenu_4_7_10},
+//     {mnuCmdNov, sampleMenu_4_7_11},  {mnuCmdDec, sampleMenu_4_7_12},
+//     {mnuCmdBack, sampleMenu_back}};
 
 const char sampleMenu_3_1[] = " Summer";
 const char sampleMenu_3_2[] = " Winter";
@@ -166,8 +163,8 @@ const char sampleMenu_4_2[] = " PROGRAM SCHEDULE";
 const char sampleMenu_4_3[] = " SUMMER WORK DAYS";
 const char sampleMenu_4_4[] = " WINTER WORK DAYS";
 const char sampleMenu_4_5[] = " EXAM DAYS";
-const char sampleMenu_4_6[] = " PROGRAM MONTHLY";
-const char sampleMenu_4_7[] = " CALENDAR HOLIDAY";
+const char sampleMenu_4_6[] = " SECOND SAT";
+const char sampleMenu_4_7[] = " PROGRAM HOLIDAY";
 const MenuItem sampleMenu_List_4[] = {
     {mnuCmdSetDateTime, sampleMenu_4_1},
     {mnuCmdProgSched, sampleMenu_4_2},
@@ -179,8 +176,7 @@ const MenuItem sampleMenu_List_4[] = {
      menuCount(sampleMenu_List_4_5)},
     {mnuCmdProgMonth, sampleMenu_4_6, sampleMenu_List_4_6,
      menuCount(sampleMenu_List_4_6)},
-    {mnuCmdCalendarHoliday, sampleMenu_4_7, sampleMenu_List_4_7,
-     menuCount(sampleMenu_List_4_7)},
+    {mnuCmdCalendarHoliday, sampleMenu_4_7},
 };
 
 const char sampleMenu_1[] = " HOME";

@@ -50,5 +50,14 @@ After we're done for the day activate the next schedule.
 FirstApproach-> we load the schedule at boot, after we're completed with one schedule we restart the device and hence the next schedule loaded automatically.
 
 Implement-> second saturday
+    store wether to check in eeprom.
+
 Implement-> take date as input, declare holiday for that date. after it is processed remove it from eeprom.
 Implement-> take date in SetDateTime
+Implement-> Clear all Schedules
+            Clear all Holidays.
+
+
+Implement-> restart at every midnight.
+Implement-> store idx of bell processing in eprom, reset this after the schedule is done, if current time > this bell then increment the bell until now is less the the bell to process.
+Restart wherever required after changes like in schedule or today's active schedule or wether to check second sat

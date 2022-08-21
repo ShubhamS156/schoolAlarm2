@@ -34,7 +34,8 @@
 #define ENT 16
 #define PROGSCHEDSIZE 50
 #define BELLCOUNTMAX 15
-
+#define MAXHOLIDAYS 30
+#define SATCHKKEY "satchk"
 /*--------------structs----------------*/
 typedef struct
 {
@@ -54,6 +55,13 @@ typedef struct
 {
   uint8_t scheds[7] = {0};
 } ModeSched __packed;
+
+typedef struct
+{
+  uint8_t year;
+  uint8_t month;
+  uint8_t day;
+} HolidayDate __packed;
 
 typedef struct
 {
@@ -117,7 +125,9 @@ ModeSched winterSched;
 ModeSched examSched;
 ProgSched *activeSchedPtr = NULL;
 ProgSched activeSchedule;
+static bool checkSecondSat = true;
 static bool schedFoundEeprom = false;
+static bool todayHoliday = false;
 int activeBellCount = 0;
 int activeBellCnt = 0;
 /*------------util funcs-----------------*/
@@ -624,6 +634,21 @@ Pair getDateTime(String msg)
 void handleSetDateTime()
 {
   RtcDateTime now;
+  // first get date then time.
+  uint8_t YEAR = 0, MONTH = 1, DAY = 2;
+  uint8_t buf[3];
+  if (getDate(&buf[0]))
+  {
+    Serial.println("Got Date");
+    now = rtc.GetDateTime();
+    RtcDateTime updateDate(buf[YEAR], buf[MONTH], buf[DAY], now.Hour(), now.Minute(), now.Second());
+    rtc.SetDateTime(updateDate);
+    Serial.printf("RTC Date Updated to Y=20%d,M=%d,D=%d\n", buf[YEAR], buf[MONTH], buf[DAY]);
+  }
+  else
+  {
+    Serial.println("Date not updated");
+  }
   Pair timeKey = getDateTime("Set Time");
 
   if (timeKey.first == MENU)
@@ -793,29 +818,29 @@ void daySchedHandler(int mode, int day)
     if (mode == SUMMER)
     {
       summerSched.scheds[day] = dayKey.second;
-      Serial.printf("Mode=%d Day=%d, Schedule=%d\n",mode,day,summerSched.scheds[day]);
+      Serial.printf("Mode=%d Day=%d, Schedule=%d\n", mode, day, summerSched.scheds[day]);
       String key = "modeSum";
-      void* value = (void*)(&summerSched);
-      int len = pref.putBytes(key.c_str(),value,sizeof(ModeSched));
-      Serial.printf("Stored %dBytes\n",len);
+      void *value = (void *)(&summerSched);
+      int len = pref.putBytes(key.c_str(), value, sizeof(ModeSched));
+      Serial.printf("Stored %dBytes\n", len);
     }
     else if (mode == WINTER)
     {
       winterSched.scheds[day] = dayKey.second;
-      Serial.printf("Mode=%d Day=%d, Schedule=%d\n",mode,day,winterSched.scheds[day]);
+      Serial.printf("Mode=%d Day=%d, Schedule=%d\n", mode, day, winterSched.scheds[day]);
       String key = "modeWin";
-      void* value = (void*)(&winterSched);
-      int len = pref.putBytes(key.c_str(),value,sizeof(ModeSched));
-      Serial.printf("Stored %dBytes\n",len);
+      void *value = (void *)(&winterSched);
+      int len = pref.putBytes(key.c_str(), value, sizeof(ModeSched));
+      Serial.printf("Stored %dBytes\n", len);
     }
     else if (mode == EXAM)
     {
       examSched.scheds[day] = dayKey.second;
-      Serial.printf("Mode=%d Day=%d, Schedule=%d\n",mode,day,examSched.scheds[day]);
+      Serial.printf("Mode=%d Day=%d, Schedule=%d\n", mode, day, examSched.scheds[day]);
       String key = "modeExam";
-      void* value = (void*)(&examSched);
-      int len = pref.putBytes(key.c_str(),value,sizeof(ModeSched));
-      Serial.printf("Stored %dBytes\n",len);
+      void *value = (void *)(&examSched);
+      int len = pref.putBytes(key.c_str(), value, sizeof(ModeSched));
+      Serial.printf("Stored %dBytes\n", len);
     }
     else
     {
@@ -823,6 +848,105 @@ void daySchedHandler(int mode, int day)
     }
     clearLcd();
     printSelected();
+  }
+}
+/* In: buffer to store year month and date.
+  Out: True if getting values successfule
+        ELSE
+        False
+*/
+bool getDate(uint8_t *buff)
+{
+  // get 3int: year,month,date ,store in buff.
+  uint8_t YEAR = 0, MONTH = 1, DAY = 2;
+  Pair yearKey = getFile(22, 99, "Year=20", 200);
+  if (yearKey.first == MENU)
+  {
+    gotoRoot();
+    return false;
+  }
+  else if (yearKey.first == BACK)
+  {
+    clearLcd();
+    printSelected();
+    return false;
+  }
+  else if (yearKey.first == ENT)
+  {
+    buff[YEAR] = yearKey.second;
+    Serial.printf("Year=%d\n", buff[YEAR]);
+  }
+  else
+  {
+    Serial.println("Error in Retrieving Year\n");
+  }
+
+  Pair monthKey = getFile(1, 12, "Month=", 200);
+  if (monthKey.first == MENU)
+  {
+    gotoRoot();
+    return false;
+  }
+  else if (monthKey.first == BACK)
+  {
+    clearLcd();
+    printSelected();
+    return false;
+  }
+  else if (monthKey.first == ENT)
+  {
+    buff[MONTH] = monthKey.second;
+    Serial.printf("Month=%d\n", buff[MONTH]);
+  }
+  else
+  {
+    Serial.println("Error in Retrieving Month\n");
+  }
+
+  Pair dayKey = getFile(1, 31, "Day=", 200);
+  if (dayKey.first == MENU)
+  {
+    gotoRoot();
+    return false;
+  }
+  else if (dayKey.first == BACK)
+  {
+    clearLcd();
+    printSelected();
+    return false;
+  }
+  else if (dayKey.first == ENT)
+  {
+    buff[DAY] = dayKey.second;
+    Serial.printf("Day=%d\n", buff[DAY]);
+  }
+  else
+  {
+    Serial.println("Error in Retrieving Day\n");
+  }
+
+  return true;
+}
+void handleProgHoliday()
+{
+  // we have to get 3 numbers using getFile()
+  // store them in eeprom using String(month)+String(date) as key.
+  // in setup try to get an entry with today's String(month)+String(date) as key.
+  // if retrieved today is holiday.
+  uint8_t YEAR = 0, MONTH = 1, DAY = 2;
+  uint8_t buf[3];
+  if (getDate(&buf[0]))
+  {
+    Serial.println("Got Date Successfully");
+    String key = String(buf[MONTH]) + String(buf[DAY]);
+    Serial.printf("Key=%s\n", key);
+    void *value = (void *)(&buf);
+    int len = pref.putBytes(key.c_str(), value, sizeof(buf));
+    Serial.printf("Stored %dbytes\n", len);
+  }
+  else
+  {
+    Serial.println("Failed to Program Holiday");
   }
 }
 /*--------------------------Tasks-----------------------*/
@@ -833,7 +957,7 @@ void keyPressTask(void *pvParameters)
   int actionKey = -1;
   int keyPressed = 0;
   int len = 0;
-  void* value;
+  void *value;
   while (1)
   {
     if (ttp229.keyChange)
@@ -890,25 +1014,25 @@ void keyPressTask(void *pvParameters)
                 break;
               case mnuCmdSummer:
                 currentMode = SUMMER;
-                value = (void*)(&currentMode);
-                len = pref.putBytes("mode",value,sizeof(uint8_t));
-                Serial.printf("Stored %dBytes\n",len);
+                value = (void *)(&currentMode);
+                len = pref.putBytes("mode", value, sizeof(uint8_t));
+                Serial.printf("Stored %dBytes\n", len);
                 Serial.println("Mode=SUMMER");
                 handleHome();
                 break;
               case mnuCmdWinter:
                 currentMode = WINTER;
-                value = (void*)(&currentMode);
-                len = pref.putBytes("mode",value,sizeof(uint8_t));
-                Serial.printf("Stored %dBytes\n",len);
+                value = (void *)(&currentMode);
+                len = pref.putBytes("mode", value, sizeof(uint8_t));
+                Serial.printf("Stored %dBytes\n", len);
                 Serial.println("Mode=WINTER");
                 handleHome();
                 break;
               case mnuCmdExam:
                 currentMode = EXAM;
-                value = (void*)(&currentMode);
-                len = pref.putBytes("mode",value,sizeof(uint8_t));
-                Serial.printf("Stored %dBytes\n",len);
+                value = (void *)(&currentMode);
+                len = pref.putBytes("mode", value, sizeof(uint8_t));
+                Serial.printf("Stored %dBytes\n", len);
                 Serial.println("Mode=EXAM");
                 handleHome();
                 break;
@@ -930,109 +1054,133 @@ void keyPressTask(void *pvParameters)
                 Serial.println("ProgSched Exited");
               case mnuCmdSumMon:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,MONDAY);
+                daySchedHandler(SUMMER, MONDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdSumTue:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,TUESDAY);
+                daySchedHandler(SUMMER, TUESDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdSumWed:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,WEDNESDAY);
+                daySchedHandler(SUMMER, WEDNESDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdSumThu:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,THURSDAY);
+                daySchedHandler(SUMMER, THURSDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdSumFri:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,FRIDAY);
+                daySchedHandler(SUMMER, FRIDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdSumSat:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,SATURDAY);
+                daySchedHandler(SUMMER, SATURDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdSumSun:
                 Serial.println("Summer ");
-                daySchedHandler(SUMMER,SUNDAY);
+                daySchedHandler(SUMMER, SUNDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinMon:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,MONDAY);
+                daySchedHandler(WINTER, MONDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinTue:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,TUESDAY);
+                daySchedHandler(WINTER, TUESDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinWed:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,WEDNESDAY);
+                daySchedHandler(WINTER, WEDNESDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinThu:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,THURSDAY);
+                daySchedHandler(WINTER, THURSDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinFri:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,FRIDAY);
+                daySchedHandler(WINTER, FRIDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinSat:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,SATURDAY);
+                daySchedHandler(WINTER, SATURDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdWinSun:
                 Serial.println("Winter");
-                daySchedHandler(WINTER,SUNDAY);
+                daySchedHandler(WINTER, SUNDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExMon:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,MONDAY);
+                daySchedHandler(EXAM, MONDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExTue:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,TUESDAY);
+                daySchedHandler(EXAM, TUESDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExWed:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,WEDNESDAY);
+                daySchedHandler(EXAM, WEDNESDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExThu:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,THURSDAY);
+                daySchedHandler(EXAM, THURSDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExFri:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,FRIDAY);
+                daySchedHandler(EXAM, FRIDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExSat:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,SATURDAY);
+                daySchedHandler(EXAM, SATURDAY);
                 Serial.println("Exit");
                 break;
               case mnuCmdExSun:
                 Serial.println("Exam");
-                daySchedHandler(EXAM,SUNDAY);
+                daySchedHandler(EXAM, SUNDAY);
                 Serial.println("Exit");
                 break;
+              case mnuCmdOff:
+                checkSecondSat = false;
+                pref.putBool(SATCHKKEY, checkSecondSat);
+                Serial.println("SecondSat Check Off");
+                clearLcd();
+                lcd.print("Second Sat OFF");
+                clearLcd();
+                printSelected();
+                Serial.println("Exit");
+                break;
+              case mnuCmdSecondSat:
+                checkSecondSat = true;
+                pref.putBool(SATCHKKEY, checkSecondSat);
+                Serial.println("SecondSat Check ON");
+                clearLcd();
+                lcd.print("Second Sat ON");
+                clearLcd();
+                printSelected();
+                Serial.println("Exit");
+                break;
+              case mnuCmdCalendarHoliday:
+                Serial.println("Entering Programming Holiday");
+                handleProgHoliday();
+                Serial.println("Exiting");
               default:
                 break;
               }
@@ -1078,20 +1226,38 @@ void alarmTask(void *pvParameters)
   int prevAlarmCheck = 0;
   while (1)
   {
+    now = rtc.GetDateTime();
+    //if midnight restart.
+    
     if (schedFoundEeprom)
     {
-      Serial.printf("Checking for Schedule=%d, Bell=%d\n", activeSchedPtr->id,
-                    activeBellCnt);
-      now = rtc.GetDateTime();
-      Serial.printf("%d:%d\n", now.Hour(), now.Minute());
-      prevAlarmCheck = millis();
-      if (activeSchedPtr->bells[activeBellCnt].hour == now.Hour() &&
-          activeSchedPtr->bells[activeBellCnt].min == now.Minute())
+      // checking for 2nd saturday.
+      if (now.Day() > 7 && now.Day() <= 14 && now.DayOfWeek() == 6)
       {
-        myDFPlayer.play(activeSchedPtr->bells[activeBellCnt].file);
-        Serial.printf("Playing Bell=%d File=%d\n", activeBellCnt,
-                      activeSchedPtr->bells[activeBellCnt].file);
-        activeBellCnt++;
+        // DayOfWeek = 6 if Saturday.
+        Serial.println("Second Saturday");
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+      }
+      else if (todayHoliday)
+      {
+        // assigned holidays.
+        Serial.println("Not checking today Holiday");
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+      }
+      else
+      {
+        Serial.printf("Checking for Schedule=%d, Bell=%d\n", activeSchedPtr->id,
+                      activeBellCnt);
+        Serial.printf("%d:%d\n", now.Hour(), now.Minute());
+        prevAlarmCheck = millis();
+        if (activeSchedPtr->bells[activeBellCnt].hour == now.Hour() &&
+            activeSchedPtr->bells[activeBellCnt].min == now.Minute())
+        {
+          myDFPlayer.play(activeSchedPtr->bells[activeBellCnt].file);
+          Serial.printf("Playing Bell=%d File=%d\n", activeBellCnt,
+                        activeSchedPtr->bells[activeBellCnt].file);
+          activeBellCnt++;
+        }
       }
     }
     vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -1176,43 +1342,47 @@ void setup()
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
   /*-------------eeprom--------------*/
   String key = "mode";
-  int modeSchedIdx=0;
-  int day = (now.DayOfWeek()-1)%7; //func returns 0 for sunday we have 0 for monday.
-  Serial.printf("Day=%d\n",day);
-  int len = pref.getBytes(key.c_str(),&currentMode,sizeof(uint8_t));
-  Serial.printf("Got %dbytes\n",len);
-  Serial.printf("Active Mode = %d\n",currentMode); 
-  if(currentMode == SUMMER){
+  int modeSchedIdx = 0;
+  int day = (now.DayOfWeek() - 1) % 7; // func returns 0 for sunday we have 0 for monday.
+  Serial.printf("Day=%d\n", day);
+  int len = pref.getBytes(key.c_str(), &currentMode, sizeof(uint8_t));
+  Serial.printf("Got %dbytes\n", len);
+  Serial.printf("Active Mode = %d\n", currentMode);
+  if (currentMode == SUMMER)
+  {
     key = "modeSum";
-    len = pref.getBytes(key.c_str(),&summerSched,sizeof(ModeSched));
-    Serial.printf("Got %dbytes\n",len);
+    len = pref.getBytes(key.c_str(), &summerSched, sizeof(ModeSched));
+    Serial.printf("Got %dbytes\n", len);
     modeSchedIdx = summerSched.scheds[day];
-    Serial.printf("modeSchedIdx=%d\n",modeSchedIdx);
+    Serial.printf("modeSchedIdx=%d\n", modeSchedIdx);
   }
-  else if(currentMode == WINTER){
+  else if (currentMode == WINTER)
+  {
     key = "modeWin";
-    len = pref.getBytes(key.c_str(),&winterSched,sizeof(ModeSched));
-    Serial.printf("Got %dbytes\n",len);
+    len = pref.getBytes(key.c_str(), &winterSched, sizeof(ModeSched));
+    Serial.printf("Got %dbytes\n", len);
     modeSchedIdx = winterSched.scheds[day];
   }
-  else if(currentMode == EXAM){
+  else if (currentMode == EXAM)
+  {
     key = "modeExam";
-    len = pref.getBytes(key.c_str(),&examSched,sizeof(ModeSched));
-    Serial.printf("Got %dbytes\n",len);
+    len = pref.getBytes(key.c_str(), &examSched, sizeof(ModeSched));
+    Serial.printf("Got %dbytes\n", len);
     modeSchedIdx = examSched.scheds[day];
   }
-  else{
+  else
+  {
     Serial.println("Invalid Mode");
   }
-  //got index of schedule to activate today.
-    Serial.printf("modeSchedIdx=%d\n",modeSchedIdx);
-  key = "p"+String(modeSchedIdx);
-  Serial.printf("Schedule key=%s\n",key.c_str());
-  len = pref.getBytes(key.c_str(), &activeSchedule,sizeof(ProgSched));
+  // got index of schedule to activate today.
+  Serial.printf("modeSchedIdx=%d\n", modeSchedIdx);
+  key = "p" + String(modeSchedIdx);
+  Serial.printf("Schedule key=%s\n", key.c_str());
+  len = pref.getBytes(key.c_str(), &activeSchedule, sizeof(ProgSched));
   activeSchedPtr = &activeSchedule;
   // retrieving bells
-  key = "pb"+String(modeSchedIdx);
-  Serial.printf("Bell key=%s\n",key.c_str());
+  key = "pb" + String(modeSchedIdx);
+  Serial.printf("Bell key=%s\n", key.c_str());
   len = pref.getBytes(key.c_str(), &bellArr,
                       sizeof(Bell) * activeSchedule.bellCount);
   if (len == 0)
@@ -1234,6 +1404,29 @@ void setup()
         activeSchedule.bells[0].file);
   }
 
+  /*--------Retrieve Second Sat Bool----------*/
+  checkSecondSat = pref.getBool(SATCHKKEY, true);
+  Serial.printf("Check Second Sat=%d\n", checkSecondSat);
+
+  /*---------Retrieve Holiday using Today's key if possible----------*/
+  int month = now.Month();
+  int day = now.Day();
+  String key = String(month) + String(day);
+  uint8_t buf[3];
+  int len = pref.getBytes(key.c_str(), &buf, sizeof(buf));
+  if (len > 0)
+  {
+    Serial.println("Today is Holiday");
+    todayHoliday = true;
+    if (pref.remove(key.c_str()))
+    {
+      Serial.println("Removed Today from Holiday List");
+    }
+  }
+  else
+  {
+    Serial.println("Today is not Holiday");
+  }
   /*--------Alarm Task---------------*/
   xTaskCreate(alarmTask, "alarm", 2048, NULL, 2, NULL);
   /*---------homescreen by default---------*/
