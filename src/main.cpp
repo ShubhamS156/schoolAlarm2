@@ -871,7 +871,7 @@ void setup() {
   }
 
   /*--------Alarm Task---------------*/
-  xTaskCreate(alarmTask, "alarm", 1024, NULL, 2, NULL);
+  xTaskCreate(alarmTask, "alarm", 2048 , NULL, 2, NULL);
   /*---------homescreen by default---------*/
   handleHome();
   /*-----------Keypress Task-----------------*/
