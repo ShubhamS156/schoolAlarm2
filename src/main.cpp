@@ -403,6 +403,7 @@ void handleHome()
       delay(500);
       digitalWrite(errBuzPin, LOW);
     }
+    vTaskDelay(200/portTICK_PERIOD_MS);
   }
   clearLcd();
   printSelected();
