@@ -793,6 +793,7 @@ void daySchedHandler(int mode, int day)
     if (mode == SUMMER)
     {
       summerSched.scheds[day] = dayKey.second;
+      Serial.printf("Mode=%d Day=%d, Schedule=%d\n",mode,day,summerSched.scheds[day]);
       String key = "modeSum";
       void* value = (void*)(&summerSched);
       int len = pref.putBytes(key.c_str(),value,sizeof(ModeSched));
@@ -801,6 +802,7 @@ void daySchedHandler(int mode, int day)
     else if (mode == WINTER)
     {
       winterSched.scheds[day] = dayKey.second;
+      Serial.printf("Mode=%d Day=%d, Schedule=%d\n",mode,day,winterSched.scheds[day]);
       String key = "modeWin";
       void* value = (void*)(&winterSched);
       int len = pref.putBytes(key.c_str(),value,sizeof(ModeSched));
@@ -809,6 +811,7 @@ void daySchedHandler(int mode, int day)
     else if (mode == EXAM)
     {
       examSched.scheds[day] = dayKey.second;
+      Serial.printf("Mode=%d Day=%d, Schedule=%d\n",mode,day,examSched.scheds[day]);
       String key = "modeExam";
       void* value = (void*)(&examSched);
       int len = pref.putBytes(key.c_str(),value,sizeof(ModeSched));
@@ -1175,14 +1178,16 @@ void setup()
   String key = "mode";
   int modeSchedIdx=0;
   int day = (now.DayOfWeek()-1)%7; //func returns 0 for sunday we have 0 for monday.
+  Serial.printf("Day=%d\n",day);
   int len = pref.getBytes(key.c_str(),&currentMode,sizeof(uint8_t));
   Serial.printf("Got %dbytes\n",len);
-  Serial.printf("Active Mode =%d\n",currentMode); 
+  Serial.printf("Active Mode = %d\n",currentMode); 
   if(currentMode == SUMMER){
     key = "modeSum";
     len = pref.getBytes(key.c_str(),&summerSched,sizeof(ModeSched));
     Serial.printf("Got %dbytes\n",len);
     modeSchedIdx = summerSched.scheds[day];
+    Serial.printf("modeSchedIdx=%d\n",modeSchedIdx);
   }
   else if(currentMode == WINTER){
     key = "modeWin";
@@ -1200,6 +1205,7 @@ void setup()
     Serial.println("Invalid Mode");
   }
   //got index of schedule to activate today.
+    Serial.printf("modeSchedIdx=%d\n",modeSchedIdx);
   key = "p"+String(modeSchedIdx);
   Serial.printf("Schedule key=%s\n",key.c_str());
   len = pref.getBytes(key.c_str(), &activeSchedule,sizeof(ProgSched));
