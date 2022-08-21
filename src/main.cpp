@@ -829,6 +829,8 @@ void keyPressTask(void *pvParameters)
   Serial.println("Starting Key Press Detection");
   int actionKey = -1;
   int keyPressed = 0;
+  int len = 0;
+  void* value;
   while (1)
   {
     if (ttp229.keyChange)
@@ -885,24 +887,24 @@ void keyPressTask(void *pvParameters)
                 break;
               case mnuCmdSummer:
                 currentMode = SUMMER;
-                void* value = (void*)(&currentMode);
-                int len = pref.putBytes("mode",value,sizeof(uint8_t));
+                value = (void*)(&currentMode);
+                len = pref.putBytes("mode",value,sizeof(uint8_t));
                 Serial.printf("Stored %dBytes\n",len);
                 Serial.println("Mode=SUMMER");
                 handleHome();
                 break;
               case mnuCmdWinter:
                 currentMode = WINTER;
-                void* value = (void*)(&currentMode);
-                int len = pref.putBytes("mode",value,sizeof(uint8_t));
+                value = (void*)(&currentMode);
+                len = pref.putBytes("mode",value,sizeof(uint8_t));
                 Serial.printf("Stored %dBytes\n",len);
                 Serial.println("Mode=WINTER");
                 handleHome();
                 break;
               case mnuCmdExam:
                 currentMode = EXAM;
-                void* value = (void*)(&currentMode);
-                int len = pref.putBytes("mode",value,sizeof(uint8_t));
+                value = (void*)(&currentMode);
+                len = pref.putBytes("mode",value,sizeof(uint8_t));
                 Serial.printf("Stored %dBytes\n",len);
                 Serial.println("Mode=EXAM");
                 handleHome();
