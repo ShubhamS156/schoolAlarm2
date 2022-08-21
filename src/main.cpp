@@ -337,6 +337,7 @@ void handleHome()
   int actionKey = -1;
   int keyPressed = 0;
   char buf[100];
+  int mp3State;
   clearLcd();
   while (!exit)
   {
@@ -350,6 +351,7 @@ void handleHome()
       keyPressed = ttp229.GetKey16();
       if (keyPressed != RELEASE)
       {
+        digitalWrite(touchLedPin,HIGH);
         actionKey = keyPressed;
         obj.getCurrentItemName(buf);
         Serial.printf("Screen:%s\n", buf);
@@ -359,6 +361,7 @@ void handleHome()
       {
         if (actionKey != -1)
         {
+          digitalWrite(touchLedPin,LOW);
           switch (actionKey)
           {
           case UP:
@@ -382,7 +385,23 @@ void handleHome()
           actionKey = -1;
         }
       }
+      delay(100);
+    }
+    mp3State = digitalRead(mp3busyPin);
+    if (mp3State == HIGH)
+    {
+      digitalWrite(relayAmpPin, LOW);
+      digitalWrite(relayMicPin, HIGH);
+      digitalWrite(micActivatePin, HIGH);
+      digitalWrite(errBuzPin, LOW);
+    }
+    else
+    {
+      digitalWrite(relayAmpPin, HIGH);
+      digitalWrite(relayMicPin, LOW);
+      digitalWrite(errBuzPin, HIGH);
       delay(500);
+      digitalWrite(errBuzPin, LOW);
     }
   }
   clearLcd();
@@ -418,6 +437,7 @@ Pair getFile(int min, int fileCount, String msg, int delayMs)
     {
       if (ttp229.keyChange)
       {
+        digitalWrite(touchLedPin,HIGH);
         keyPressed = ttp229.GetKey16();
         if (keyPressed != RELEASE)
         {
@@ -428,6 +448,7 @@ Pair getFile(int min, int fileCount, String msg, int delayMs)
         {
           if (actionKey != -1)
           {
+            digitalWrite(touchLedPin,LOW);
             switch (actionKey)
             {
             case UP:
@@ -547,6 +568,7 @@ Pair getDateTime(String msg)
   {
     if (ttp229.keyChange)
     {
+      digitalWrite(touchLedPin,HIGH);
       keyPressed = ttp229.GetKey16();
       if (keyPressed != RELEASE)
       {
@@ -557,6 +579,7 @@ Pair getDateTime(String msg)
       {
         if (actionKey != -1)
         {
+          digitalWrite(touchLedPin,LOW);
           switch (actionKey)
           {
           case UP:
@@ -1305,6 +1328,7 @@ void setup()
   pinMode(micActivatePin, OUTPUT);
   pinMode(errBuzPin, OUTPUT);
   pinMode(mp3busyPin, INPUT);
+  digitalWrite(relayAmpPin, HIGH);
   /*-----------Preferences---------*/
   pref.begin("alarm");
 
