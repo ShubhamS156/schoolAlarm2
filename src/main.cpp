@@ -397,7 +397,7 @@ void handleHome()
     }
     else
     {
-      digitalWrite(relayAmpPin, HIGH);
+      digitalWrite(relayAmpPin, LOW);
       digitalWrite(relayMicPin, LOW);
       digitalWrite(errBuzPin, HIGH);
       delay(500);
@@ -1507,7 +1507,7 @@ void loop()
   }
   else
   {
-    digitalWrite(relayAmpPin, HIGH);
+    digitalWrite(relayAmpPin, LOW);
     digitalWrite(relayMicPin, LOW);
     digitalWrite(micActivatePin,LOW);
     digitalWrite(errBuzPin, HIGH);
