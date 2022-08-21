@@ -174,8 +174,7 @@ const MenuItem sampleMenu_List_4[] = {
      menuCount(sampleMenu_List_4_4)},
     {mnuCmdExams, sampleMenu_4_5, sampleMenu_List_4_5,
      menuCount(sampleMenu_List_4_5)},
-    {mnuCmdProgMonth, sampleMenu_4_6, sampleMenu_List_4_6,
-     menuCount(sampleMenu_List_4_6)},
+    {mnuCmdSecondSat, sampleMenu_4_6},
     {mnuCmdCalendarHoliday, sampleMenu_4_7},
 };
 

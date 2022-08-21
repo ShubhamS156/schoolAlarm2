@@ -152,6 +152,7 @@ void printSelected()
 
   int counter = 1;
   lcd.setCursor(0, 0);
+  lcd.clear();
   if (obj.getCurrentItemIndex() < 4)
   {
     // print top 4 items
@@ -173,7 +174,6 @@ void printSelected()
       lcd.print(curr[i].name);
       lcd.setCursor(0, counter++);
     }
-    lcd.clear();
     lcd.setCursor(0, 3);
   }
   xSemaphoreGive(lcdMutex);
