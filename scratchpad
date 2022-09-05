@@ -50,13 +50,13 @@ After we're done for the day activate the next schedule.
 FirstApproach-> we load the schedule at boot, after we're completed with one schedule we restart the device and hence the next schedule loaded automatically.
 
 Implement-> second saturday
-    store wether to check in eeprom.
+store wether to check in eeprom.
 
 Implement-> take date as input, declare holiday for that date. after it is processed remove it from eeprom.
 Implement-> take date in SetDateTime
 Implement-> Clear all Schedules
-            Clear all Holidays.
-
+Clear all Holidays.
+Implement-> make a function which consists all the logic in setup of loading today's schedule, call this function every midnight.
 
 ----------Done till here-------------
 Implement->if today is holiday after restart it'll treat as not holiday , so dont clear pref instantly ,clear at midnight.
