@@ -64,3 +64,6 @@ Implement->if today is holiday after restart it'll treat as not holiday , so don
 Implement-> restart at every midnight.
 Implement-> store idx of bell processing in eprom, reset this after the schedule is done, if current time > this bell then increment the bell until now is less the the bell to process.
 Restart wherever required after changes like in schedule or today's active schedule or wether to check second sat
+
+----------ISSUES-------------
+pressing ZERO in getFile() irrespective of caller, will try to get sched info with current index.

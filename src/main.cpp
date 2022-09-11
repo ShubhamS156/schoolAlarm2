@@ -509,6 +509,8 @@ void schedInfo(int idx)
       }
     }
   }
+  lcd.clear();
+  xSemaphoreGive(lcdMutex);
 }
 
 Pair getFile(int min, int fileCount, String msg, int delayMs)
