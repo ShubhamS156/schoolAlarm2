@@ -37,29 +37,34 @@
 #define MAXHOLIDAYS 30
 #define SATCHKKEY "satchk"
 /*--------------structs----------------*/
-typedef struct {
+typedef struct
+{
   uint8_t hour;
   uint8_t min;
   uint8_t file;
 } Bell __packed;
 
-typedef struct {
+typedef struct
+{
   uint8_t id;
   uint8_t bellCount = 0;
   Bell *bells;
 } ProgSched __packed;
 
-typedef struct {
+typedef struct
+{
   uint8_t scheds[7] = {0};
 } ModeSched __packed;
 
-typedef struct {
+typedef struct
+{
   uint8_t year;
   uint8_t month;
   uint8_t day;
 } HolidayDate __packed;
 
-typedef struct {
+typedef struct
+{
   int first = 0;
   int second = 0;
 } Pair;
@@ -91,8 +96,23 @@ byte char4[8] = {0b00100, 0b00100, 0b00100, 0b11100,
 uint8_t arrow[8] = {0x00, 0x04, 0x06, 0x1f,
                     0x06, 0x04, 0x00}; // Send 0,4,6,1F,6,4,0 for the arrow
 
-enum Modes { SUMMER = 0, WINTER, EXAM, UNDEFINED };
-enum Days { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY };
+enum Modes
+{
+  SUMMER = 0,
+  WINTER,
+  EXAM,
+  UNDEFINED
+};
+enum Days
+{
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY,
+  SUNDAY
+};
 static SemaphoreHandle_t lcdMutex;
 //-1 = undefined, 0=homescreen, 1=menuscreen
 static int currentItem = -1; // currently selected menuItem
@@ -121,7 +141,8 @@ int micActivatePin = 13;
 int somePin = -1;
 
 /*------------util funcs-----------------*/
-void createCustomCharacters() {
+void createCustomCharacters()
+{
   lcd.createChar(0, verticalLine);
   lcd.createChar(1, char1);
   lcd.createChar(2, char2);
@@ -129,7 +150,8 @@ void createCustomCharacters() {
   lcd.createChar(4, char4);
   lcd.createChar(5, arrow);
 }
-void printSelected() {
+void printSelected()
+{
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   const MenuItem *curr = obj.getMenuItem();
 
@@ -141,19 +163,24 @@ void printSelected() {
   int counter = 1;
   lcd.setCursor(0, 0);
   lcd.clear();
-  if (obj.getCurrentItemIndex() < 4) {
+  if (obj.getCurrentItemIndex() < 4)
+  {
     // print top 4 items
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
       lcd.print(curr[i].name);
       Serial.println(curr[i].name);
       lcd.setCursor(0, counter++);
     }
     lcd.setCursor(0, obj.getCurrentItemIndex());
     Serial.printf("Resetting cursor to %d\n", obj.getCurrentItemIndex());
-  } else {
+  }
+  else
+  {
     // print the selected and above 3
     for (int i = obj.getCurrentItemIndex() - 3; i <= obj.getCurrentItemIndex();
-         i++) {
+         i++)
+    {
       lcd.print(curr[i].name);
       lcd.setCursor(0, counter++);
     }
@@ -162,7 +189,8 @@ void printSelected() {
   xSemaphoreGive(lcdMutex);
   lcd.write(5); // TODO: enable this when custom chars implemented.
 }
-void printFrame() {
+void printFrame()
+{
   lcd.setCursor(1, 0);
   lcd.print("------------------");
   lcd.setCursor(1, 3);
@@ -185,7 +213,8 @@ void printFrame() {
   lcd.write(byte(4));
   lcd.setCursor(2, 1);
 }
-void printTime(RtcDateTime &tm) {
+void printTime(RtcDateTime &tm)
+{
   lcd.setCursor(2, 1);
   lcd.print(tm.Month());
   lcd.print("/");
@@ -197,50 +226,68 @@ void printTime(RtcDateTime &tm) {
   lcd.setCursor(2, 2);
   lcd.print(tm.Hour());
   lcd.print(":");
-  if (tm.Minute() < 10) {
+  if (tm.Minute() < 10)
+  {
     minutes = "0" + String(tm.Minute());
     lcd.print(minutes);
-  } else {
+  }
+  else
+  {
     lcd.print(tm.Minute());
   }
   lcd.print(":");
-  if (tm.Second() < 10) {
+  if (tm.Second() < 10)
+  {
     seconds = "0" + String(tm.Second());
     lcd.print(seconds);
-  } else {
+  }
+  else
+  {
     lcd.print(tm.Second());
   }
 }
-void drawHome(RtcDateTime &dt) {
+void drawHome(RtcDateTime &dt)
+{
   lcd.blink_off();
   lcd.noCursor();
   printTime(dt);
   lcd.setCursor(13, 1);
   lcd.print("Mode");
   lcd.setCursor(14, 2);
-  if (currentMode == SUMMER) {
+  if (currentMode == SUMMER)
+  {
     lcd.print("Sum");
-  } else if (currentMode == WINTER) {
+  }
+  else if (currentMode == WINTER)
+  {
     lcd.print("Win");
-  } else if (currentMode == EXAM) {
+  }
+  else if (currentMode == EXAM)
+  {
     lcd.print("Exm");
-  } else if (currentMode == UNDEFINED) {
+  }
+  else if (currentMode == UNDEFINED)
+  {
     lcd.print("N/a");
   }
 }
-void clearLcd() {
+void clearLcd()
+{
   xSemaphoreTake(lcdMutex, portMAX_DELAY);
   lcd.clear();
   xSemaphoreGive(lcdMutex);
 }
-void gotoRoot() {
+void gotoRoot()
+{
   obj.reset();
   currentItem = mnuCmdHome;
   clearLcd();
   printSelected();
 }
-int parseNumKeys(int actionKey) {
-  switch (actionKey) {
+int parseNumKeys(int actionKey)
+{
+  switch (actionKey)
+  {
   case ONE:
     return 1;
     break;
@@ -276,14 +323,16 @@ int parseNumKeys(int actionKey) {
     break;
   }
 }
-void keyChange() {
+void keyChange()
+{
   // A key press changed
   ttp229.keyChange = true;
 }
 
 /*------------tasks----------------------*/
 
-void handleHome() {
+void handleHome()
+{
   RtcDateTime now;
   bool exit = false;
   int actionKey = -1;
@@ -291,26 +340,33 @@ void handleHome() {
   char buf[100];
   int mp3State;
   clearLcd();
-  while (!exit) {
+  while (!exit)
+  {
     xSemaphoreTake(lcdMutex, portMAX_DELAY);
     printFrame();
     now = rtc.GetDateTime();
     drawHome(now);
     xSemaphoreGive(lcdMutex);
-    if (ttp229.keyChange) {
+    if (ttp229.keyChange)
+    {
       keyPressed = ttp229.GetKey16();
-      if (keyPressed != RELEASE) {
+      if (keyPressed != RELEASE)
+      {
         digitalWrite(touchLedPin, HIGH);
         digitalWrite(errBuzPin, HIGH);
         actionKey = keyPressed;
         obj.getCurrentItemName(buf);
         Serial.printf("Screen:%s\n", buf);
         Serial.printf("actionKey=%d\n", actionKey);
-      } else {
-        if (actionKey != -1) {
+      }
+      else
+      {
+        if (actionKey != -1)
+        {
           digitalWrite(touchLedPin, LOW);
           digitalWrite(errBuzPin, LOW);
-          switch (actionKey) {
+          switch (actionKey)
+          {
           case UP:
             break;
           case DOWN:
@@ -334,14 +390,18 @@ void handleHome() {
       }
       // delay(20);
     }
-    if (digitalRead(somePin)) {
+    if (digitalRead(somePin))
+    {
       mp3State = digitalRead(mp3busyPin);
-      if (mp3State == HIGH) {
+      if (mp3State == HIGH)
+      {
         digitalWrite(relayAmpPin, LOW);
         digitalWrite(relayMicPin, HIGH);
         digitalWrite(micActivatePin, HIGH);
         digitalWrite(errBuzPin, LOW);
-      } else {
+      }
+      else
+      {
         digitalWrite(relayAmpPin, LOW);
         digitalWrite(relayMicPin, LOW);
         digitalWrite(micActivatePin, LOW);
@@ -362,7 +422,97 @@ ENT,FILE
 MENU,-1
 BACK,-1
 */
-Pair getFile(int min, int fileCount, String msg, int delayMs) {
+
+/* displays schedule info-> Nth Bell, Time, File */
+void schedInfo(int idx)
+{
+  int actionKey = -1;
+  int keyPressed = 0;
+  bool exit = false;
+  int bell_idx = 0;
+  Bell bell_buff[BELLCOUNTMAX];
+  ProgSched sched_buff;
+  String key = "p" + String(idx);
+  int len = pref.getBytes(key.c_str(), &sched_buff, sizeof(ProgSched));
+  Serial.printf("Got %d Bytes\n", len);
+  if (len == 0)
+  {
+    Serial.println("Failed to retrieve schedule");
+    return;
+  }
+  int bell_count = sched_buff.bellCount;
+  key = "pb" + String(idx);
+  len = pref.getBytes(key.c_str(), &bell_buff, sizeof(Bell) * bell_count);
+  Serial.printf("Got %d Bytes\n", len);
+  if (len == 0)
+  {
+    Serial.println("Failed to retrieve bells");
+    return;
+  }
+  sched_buff.bells = &bell_buff[0];
+  xSemaphoreTake(lcdMutex, portMAX_DELAY);
+  lcd.clear();
+  lcd.print("Bell: ");
+  lcd.println(String(bell_idx));
+  lcd.print("Time: ");
+  lcd.println(String(sched_buff.bells[bell_idx].hour) + ":" + String(sched_buff.bells[bell_idx].min));
+  lcd.println("File: ");
+  lcd.print(String(sched_buff.bells[bell_idx].file));
+  while (!exit)
+  {
+    if (ttp229.keyChange)
+    {
+      keyPressed = ttp229.GetKey16();
+      if (keyPressed != RELEASE)
+      {
+        digitalWrite(touchLedPin, HIGH);
+        digitalWrite(errBuzPin, HIGH);
+        actionKey = keyPressed;
+        Serial.printf("actionKey=%d\n", actionKey);
+      }
+      else
+      {
+        if (actionKey != -1)
+        {
+
+          digitalWrite(touchLedPin, LOW);
+          digitalWrite(errBuzPin, LOW);
+          switch (actionKey)
+          {
+          case UP:
+            --bell_idx;
+            if (bell_idx < 0)
+              bell_idx = 0;
+            break;
+          case DOWN:
+            ++bell_idx;
+            if(bell_idx > bell_count)
+              bell_idx = bell_count;
+            break;
+          case BACK:
+          //fallthrough
+          case MENU:
+            exit = true;
+            break;
+          default:
+            break;
+          }
+          lcd.clear();
+          lcd.print("Bell: ");
+          lcd.println(String(bell_idx));
+          lcd.print("Time: ");
+          lcd.println(String(sched_buff.bells[bell_idx].hour) + ":" + String(sched_buff.bells[bell_idx].min));
+          lcd.println("File: ");
+          lcd.print(String(sched_buff.bells[bell_idx].file));
+          actionKey = -1;
+        }
+      }
+    }
+  }
+}
+
+Pair getFile(int min, int fileCount, String msg, int delayMs)
+{
   // String msg = "FILE=x";
   String counter = "";
   int cnt = min;
@@ -373,32 +523,44 @@ Pair getFile(int min, int fileCount, String msg, int delayMs) {
   Pair returnKey;
   returnKey.first = returnKey.second = 0;
   Serial.printf("FILECOUNT=%d\n", fileCount);
-  if (fileCount > min) {
+  if (fileCount > min)
+  {
     xSemaphoreTake(lcdMutex, portMAX_DELAY);
     lcd.clear();
     lcd.blink_off();
     lcd.setCursor(0, 0);
     lcd.print(msg + String(min));
-    while (!exit) {
-      if (ttp229.keyChange) {
+    while (!exit)
+    {
+      if (ttp229.keyChange)
+      {
         keyPressed = ttp229.GetKey16();
-        if (keyPressed != RELEASE) {
+        if (keyPressed != RELEASE)
+        {
           digitalWrite(touchLedPin, HIGH);
+          digitalWrite(errBuzPin, HIGH);
           actionKey = keyPressed;
           Serial.printf("actionKey=%d\n", actionKey);
-        } else {
-          if (actionKey != -1) {
+        }
+        else
+        {
+          if (actionKey != -1)
+          {
             digitalWrite(touchLedPin, LOW);
-            switch (actionKey) {
+            digitalWrite(errBuzPin, LOW);
+            switch (actionKey)
+            {
             case UP:
               --cnt;
-              if (cnt < min) {
+              if (cnt < min)
+              {
                 cnt = min;
               }
               break;
             case DOWN:
               ++cnt;
-              if (cnt > fileCount) {
+              if (cnt > fileCount)
+              {
                 cnt = fileCount;
               }
               break;
@@ -409,6 +571,9 @@ Pair getFile(int min, int fileCount, String msg, int delayMs) {
               // adding delay here to avoid repeated enter presses on
               // consecutive screens.
               delay(100);
+              break;
+            case ZERO:
+              schedInfo(cnt);
               break;
             case MENU:
               returnKey.first = MENU;
@@ -425,9 +590,12 @@ Pair getFile(int min, int fileCount, String msg, int delayMs) {
               break;
             }
             lcd.setCursor(msg.length(), 0);
-            if (cnt < 10) {
+            if (cnt < 10)
+            {
               counter = "0" + String(cnt);
-            } else {
+            }
+            else
+            {
               counter = String(cnt);
             }
             lcd.print(counter);
@@ -438,25 +606,34 @@ Pair getFile(int min, int fileCount, String msg, int delayMs) {
       }
     }
     xSemaphoreGive(lcdMutex);
-  } else {
+  }
+  else
+  {
     Serial.println("Invalid File Count");
   }
   return returnKey;
 }
 
-void handleManualMode() {
+void handleManualMode()
+{
   bool exit = false;
   Pair fileKey;
-  while (!exit) {
+  while (!exit)
+  {
     fileKey = getFile(0, myDFPlayer.readFileCounts(), "FILE-", 50);
-    if (fileKey.first == MENU) {
+    if (fileKey.first == MENU)
+    {
       exit = true;
       gotoRoot();
-    } else if (fileKey.first == BACK) {
+    }
+    else if (fileKey.first == BACK)
+    {
       exit = true;
       lcd.clear();
       printSelected();
-    } else if (fileKey.first == ENT) {
+    }
+    else if (fileKey.first == ENT)
+    {
       myDFPlayer.play(fileKey.second);
       Serial.printf("Playing File=%d\n", fileKey.second);
       Serial.printf("mp3 pin state=%d\n", digitalRead(mp3busyPin));
@@ -470,7 +647,8 @@ Returns time in hhmm format
 Or
 Returns -1,abortKEY if pressed.
 */
-Pair getDateTime(String msg) {
+Pair getDateTime(String msg)
+{
   // cnt=which value out of hh:mm
   // cursorPos= position of cursor.
   int hour = 0, min = 0, cnt = 0, cursorPos = 0, tmp = 0;
@@ -491,19 +669,26 @@ Pair getDateTime(String msg) {
   lcd.setCursor(cursorPos, time_row);
   lcd.print("00:00");
   lcd.setCursor(cursorPos, time_row);
-  while (!exit) {
-    if (ttp229.keyChange) {
+  while (!exit)
+  {
+    if (ttp229.keyChange)
+    {
       keyPressed = ttp229.GetKey16();
-      if (keyPressed != RELEASE) {
+      if (keyPressed != RELEASE)
+      {
         digitalWrite(touchLedPin, HIGH);
         digitalWrite(errBuzPin, HIGH);
         actionKey = keyPressed;
         Serial.printf("actionKey=%d\n", actionKey);
-      } else {
-        if (actionKey != -1) {
+      }
+      else
+      {
+        if (actionKey != -1)
+        {
           digitalWrite(touchLedPin, LOW);
           digitalWrite(errBuzPin, LOW);
-          switch (actionKey) {
+          switch (actionKey)
+          {
           case UP:
             Serial.println("Invalid Key");
             break;
@@ -531,13 +716,15 @@ Pair getDateTime(String msg) {
             exit = true;
             break;
           case DELETE:
-            if (cnt == 0 || cursorPos == 0) {
+            if (cnt == 0 || cursorPos == 0)
+            {
               break;
             }
             --cnt;
             --cursorPos;
             timeBuf[cnt] = 0;
-            if (cursorPos == 2) { // there is colon at 2
+            if (cursorPos == 2)
+            { // there is colon at 2
               cursorPos = 1;
               lcd.setCursor(cursorPos, time_row);
             }
@@ -548,14 +735,18 @@ Pair getDateTime(String msg) {
           default:
             // default means a number key is pressed.
             // break if we have already entered 4 numbers.
-            if (cnt >= 4) {
+            if (cnt >= 4)
+            {
               break;
             }
             tmp = parseNumKeys(actionKey);
-            if (tmp == -1) {
+            if (tmp == -1)
+            {
               Serial.println(
                   "Invalid Number Key pressed, shouldnt be possible!!");
-            } else {
+            }
+            else
+            {
               timeBuf[cnt] = tmp;
               lcd.setCursor(cursorPos,
                             time_row); // todo:check affect of removing this
@@ -563,7 +754,8 @@ Pair getDateTime(String msg) {
               lcd.print(String(tmp));
               ++cnt;
               ++cursorPos;
-              if (cursorPos == 2) {
+              if (cursorPos == 2)
+              {
                 ++cursorPos;
                 lcd.setCursor(cursorPos, time_row);
               }
@@ -581,21 +773,27 @@ Pair getDateTime(String msg) {
   return returnKey;
 }
 
-bool chkValidDate(int year, int month, int date) {
+bool chkValidDate(int year, int month, int date)
+{
   // date,month limit check
   if (date > 31 || month > 12)
     return false;
 
   // date according to month chk
-  if (month % 2 == 0 && month != 8) {
+  if (month % 2 == 0 && month != 8)
+  {
     if (month == 2 &&
-        year % 4 == 0) { // date can be till 29 only on leap year feb.
+        year % 4 == 0)
+    { // date can be till 29 only on leap year feb.
       if (date > 29)
         return false;
-    } else if (month == 2) {
+    }
+    else if (month == 2)
+    {
       if (date > 28)
         return false;
-    } else if (date > 30)
+    }
+    else if (date > 30)
       return false;
   }
 
@@ -606,62 +804,86 @@ bool chkValidDate(int year, int month, int date) {
         ELSE
         False
 */
-bool getDate(uint8_t *buff) {
+bool getDate(uint8_t *buff)
+{
   // get 3int: year,month,date ,store in buff.
   uint8_t YEAR = 0, MONTH = 1, DAY = 2;
   Pair yearKey = getFile(22, 99, "Year=20", 200);
-  if (yearKey.first == MENU) {
+  if (yearKey.first == MENU)
+  {
     gotoRoot();
     return false;
-  } else if (yearKey.first == BACK) {
+  }
+  else if (yearKey.first == BACK)
+  {
     clearLcd();
     printSelected();
     return false;
-  } else if (yearKey.first == ENT) {
+  }
+  else if (yearKey.first == ENT)
+  {
     buff[YEAR] = yearKey.second;
     Serial.printf("Year=%d\n", buff[YEAR]);
-  } else {
+  }
+  else
+  {
     Serial.println("Error in Retrieving Year\n");
   }
 
   Pair monthKey = getFile(1, 12, "Month=", 200);
-  if (monthKey.first == MENU) {
+  if (monthKey.first == MENU)
+  {
     gotoRoot();
     return false;
-  } else if (monthKey.first == BACK) {
+  }
+  else if (monthKey.first == BACK)
+  {
     clearLcd();
     printSelected();
     return false;
-  } else if (monthKey.first == ENT) {
+  }
+  else if (monthKey.first == ENT)
+  {
     buff[MONTH] = monthKey.second;
     Serial.printf("Month=%d\n", buff[MONTH]);
-  } else {
+  }
+  else
+  {
     Serial.println("Error in Retrieving Month\n");
   }
 
   Pair dayKey = getFile(1, 31, "Day=", 200);
-  if (dayKey.first == MENU) {
+  if (dayKey.first == MENU)
+  {
     gotoRoot();
     return false;
-  } else if (dayKey.first == BACK) {
+  }
+  else if (dayKey.first == BACK)
+  {
     clearLcd();
     printSelected();
     return false;
-  } else if (dayKey.first == ENT) {
+  }
+  else if (dayKey.first == ENT)
+  {
     buff[DAY] = dayKey.second;
     Serial.printf("Day=%d\n", buff[DAY]);
-  } else {
+  }
+  else
+  {
     Serial.println("Error in Retrieving Day\n");
   }
 
   return chkValidDate(buff[YEAR], buff[MONTH], buff[DAY]);
 }
-void handleSetDateTime() {
+void handleSetDateTime()
+{
   RtcDateTime now;
   // first get date then time.
   uint8_t YEAR = 0, MONTH = 1, DAY = 2;
   uint8_t buf[3];
-  if (getDate(&buf[0])) {
+  if (getDate(&buf[0]))
+  {
     Serial.println("Got Date");
     now = rtc.GetDateTime();
     RtcDateTime updateDate(buf[YEAR], buf[MONTH], buf[DAY], now.Hour(),
@@ -669,17 +891,24 @@ void handleSetDateTime() {
     rtc.SetDateTime(updateDate);
     Serial.printf("RTC Date Updated to Y=20%d,M=%d,D=%d\n", buf[YEAR],
                   buf[MONTH], buf[DAY]);
-  } else {
+  }
+  else
+  {
     Serial.println("Date not updated");
   }
   Pair timeKey = getDateTime("Set Time");
 
-  if (timeKey.first == MENU) {
+  if (timeKey.first == MENU)
+  {
     gotoRoot();
-  } else if (timeKey.first == BACK) {
+  }
+  else if (timeKey.first == BACK)
+  {
     printSelected();
     return;
-  } else {
+  }
+  else
+  {
     // got time;
     now = rtc.GetDateTime();
     RtcDateTime updated(now.Year(), now.Month(), now.Day(), timeKey.first,
@@ -690,58 +919,77 @@ void handleSetDateTime() {
     printSelected();
   }
 }
-void handleProgSched() {
+void handleProgSched()
+{
   bool exit = false;
   Pair progKey;
-  while (!exit) {
+  while (!exit)
+  {
     progKey = getFile(0, PROGSCHEDSIZE - 1, "P-", 200);
-    if (progKey.first == MENU) {
+    if (progKey.first == MENU)
+    {
       gotoRoot();
       return;
-    } else if (progKey.first == BACK) {
+    }
+    else if (progKey.first == BACK)
+    {
       clearLcd(); // thread safe.
       printSelected();
       return;
-    } else if (progKey.first == ENT) {
+    }
+    else if (progKey.first == ENT)
+    {
       // selected a schedule to program.
       int selectedSched = progKey.second;
       // setting id = index
       schedules[selectedSched].id = selectedSched;
       // get number of bells for the selected schedule.
       Pair bellCountKey = getFile(1, BELLCOUNTMAX, "Bells=", 200);
-      if (bellCountKey.first == MENU) {
+      if (bellCountKey.first == MENU)
+      {
         gotoRoot();
         return;
-      } else if (bellCountKey.first == BACK) {
+      }
+      else if (bellCountKey.first == BACK)
+      {
         clearLcd();
         printSelected();
         return;
-      } else if (bellCountKey.first == ENT) {
+      }
+      else if (bellCountKey.first == ENT)
+      {
         schedules[selectedSched].bellCount = bellCountKey.second;
         // got the bell count here, alloc memory and iterate this many times to
         // get time,file for each bell.
         schedules[selectedSched].bells =
             (Bell *)(calloc(bellCountKey.second, sizeof(Bell)));
         Bell *currBellPtr = schedules[selectedSched].bells;
-        if (currBellPtr == NULL) {
+        if (currBellPtr == NULL)
+        {
           Serial.printf("Allocating Mem Failed for Sched=%d\n", selectedSched);
           return;
         }
         int currBellCnt = 1; // the bell which we are processing.
-        while (currBellCnt <= bellCountKey.second) {
+        while (currBellCnt <= bellCountKey.second)
+        {
           Serial.printf("Processing Sched=%d, Bell=%d\n", selectedSched,
                         currBellCnt);
           Pair timeKey, fileKey;
           String msg = "Set time for Bell=" + String(currBellCnt);
           timeKey = getDateTime(msg);
-          if (timeKey.first == MENU) {
+          if (timeKey.first == MENU)
+          {
             gotoRoot();
             return;
-          } else if (timeKey.first == BACK) {
+          }
+          else if (timeKey.first == BACK)
+          {
             clearLcd();
             printSelected();
             return;
-          } else {
+          }
+          else
+          {
             // got time.
             currBellPtr[currBellCnt - 1].hour = timeKey.first;
             currBellPtr[currBellCnt - 1].min = timeKey.second;
@@ -752,14 +1000,19 @@ void handleProgSched() {
           myDFPlayer.readFileCounts();
           // TODO: fix have to call readFileCounts twice to get true value. why?
           fileKey = getFile(0, myDFPlayer.readFileCounts(), "File-", 200);
-          if (fileKey.first == MENU) {
+          if (fileKey.first == MENU)
+          {
             gotoRoot();
             return;
-          } else if (fileKey.first == BACK) {
+          }
+          else if (fileKey.first == BACK)
+          {
             clearLcd();
             printSelected();
             return;
-          } else if (fileKey.first == ENT) {
+          }
+          else if (fileKey.first == ENT)
+          {
             currBellPtr[currBellCnt - 1].file = fileKey.second;
             Serial.printf("Set File=%d, Sched=%d, Bell=%d\n", fileKey.second,
                           selectedSched, currBellCnt);
@@ -799,15 +1052,30 @@ void handleProgSched() {
   printSelected();
 }
 
-void daySchedHandler(int mode, int day) {
+void daySchedHandler(int mode, int day)
+{
   Pair dayKey = getFile(0, PROGSCHEDSIZE - 1, "P-", 200);
-  if (dayKey.first == MENU) {
+  if (dayKey.first == MENU)
+  {
     gotoRoot();
-  } else if (dayKey.first == BACK) {
+  }
+  else if (dayKey.first == BACK)
+  {
     lcd.clear();
     printSelected();
-  } else if (dayKey.first == ENT) {
-    if (mode == SUMMER) {
+  }
+  else if (dayKey.first == ENT)
+  {
+    // check if selected sched is programmed or not.
+    String key = "p" + (String)(dayKey.second);
+    if (!pref.isKey(key.c_str()))
+    {
+      clearLcd();
+      lcd.println("Schedule not defined");
+      delay(500);
+    }
+    if (mode == SUMMER)
+    {
       summerSched.scheds[day] = dayKey.second;
       Serial.printf("Mode=%d Day=%d, Schedule=%d\n", mode, day,
                     summerSched.scheds[day]);
@@ -815,7 +1083,9 @@ void daySchedHandler(int mode, int day) {
       void *value = (void *)(&summerSched);
       int len = pref.putBytes(key.c_str(), value, sizeof(ModeSched));
       Serial.printf("Stored %dBytes\n", len);
-    } else if (mode == WINTER) {
+    }
+    else if (mode == WINTER)
+    {
       winterSched.scheds[day] = dayKey.second;
       Serial.printf("Mode=%d Day=%d, Schedule=%d\n", mode, day,
                     winterSched.scheds[day]);
@@ -823,7 +1093,9 @@ void daySchedHandler(int mode, int day) {
       void *value = (void *)(&winterSched);
       int len = pref.putBytes(key.c_str(), value, sizeof(ModeSched));
       Serial.printf("Stored %dBytes\n", len);
-    } else if (mode == EXAM) {
+    }
+    else if (mode == EXAM)
+    {
       examSched.scheds[day] = dayKey.second;
       Serial.printf("Mode=%d Day=%d, Schedule=%d\n", mode, day,
                     examSched.scheds[day]);
@@ -831,35 +1103,42 @@ void daySchedHandler(int mode, int day) {
       void *value = (void *)(&examSched);
       int len = pref.putBytes(key.c_str(), value, sizeof(ModeSched));
       Serial.printf("Stored %dBytes\n", len);
-    } else {
+    }
+    else
+    {
       Serial.println("Invalid Mode");
     }
     clearLcd();
     printSelected();
   }
 }
-void handleProgHoliday() {
+void handleProgHoliday()
+{
   // we have to get 3 numbers using getFile()
   // store them in eeprom using String(month)+String(date) as key.
   // in setup try to get an entry with today's String(month)+String(date) as
   // key. if retrieved today is holiday.
   uint8_t YEAR = 0, MONTH = 1, DAY = 2;
   uint8_t buf[3];
-  if (getDate(&buf[0])) {
+  if (getDate(&buf[0]))
+  {
     Serial.println("Got Date Successfully");
     String key = String(buf[MONTH]) + String(buf[DAY]);
     Serial.printf("Key=%s\n", key);
     void *value = (void *)(&buf);
     int len = pref.putBytes(key.c_str(), value, sizeof(buf));
     Serial.printf("Stored %dbytes\n", len);
-  } else {
+  }
+  else
+  {
     Serial.println("Failed to Program Holiday");
   }
   clearLcd();
   printSelected();
 }
 /*--------------------------Tasks-----------------------*/
-void keyPressTask(void *pvParameters) {
+void keyPressTask(void *pvParameters)
+{
   printSelected();
   Serial.println("Starting Key Press Detection");
   int actionKey = -1;
@@ -867,41 +1146,54 @@ void keyPressTask(void *pvParameters) {
   int len = 0;
   int mp3State;
   void *value;
-  while (1) {
-    if (ttp229.keyChange) {
+  while (1)
+  {
+    if (ttp229.keyChange)
+    {
       keyPressed = ttp229.GetKey16();
-      if (keyPressed != RELEASE) {
+      if (keyPressed != RELEASE)
+      {
         digitalWrite(touchLedPin, HIGH);
         digitalWrite(errBuzPin, HIGH);
         actionKey = keyPressed;
         Serial.printf("actionKey=%d\n", actionKey);
-      } else {
+      }
+      else
+      {
         digitalWrite(touchLedPin, LOW);
         digitalWrite(errBuzPin, LOW);
-        if (actionKey != -1) {
-          switch (actionKey) {
+        if (actionKey != -1)
+        {
+          switch (actionKey)
+          {
           case UP:
-            if (obj.moveToPreviousItem()) {
+            if (obj.moveToPreviousItem())
+            {
               currentItem = obj.getCurrentItemCmdId();
               printSelected();
               Serial.println("Moving UP");
             }
             break;
           case DOWN:
-            if (obj.moveToNextItem()) {
+            if (obj.moveToNextItem())
+            {
               currentItem = obj.getCurrentItemCmdId();
               printSelected();
               Serial.println("Moving DOWN");
             }
             break;
           case ENT:
-            if (obj.currentItemHasChildren()) {
+            if (obj.currentItemHasChildren())
+            {
               obj.descendToChildMenu();
               currentItem = obj.getCurrentItemCmdId();
               lcd.clear();
               printSelected();
-            } else {
-              switch (currentItem) {
+            }
+            else
+            {
+              switch (currentItem)
+              {
               case mnuCmdHome:
                 Serial.println("Home Entered");
                 handleHome();
@@ -1076,9 +1368,12 @@ void keyPressTask(void *pvParameters) {
                 Serial.printf("SecondSat=%d\n", checkSecondSat);
                 clearLcd();
                 xSemaphoreTake(lcdMutex, portMAX_DELAY);
-                if (checkSecondSat) {
+                if (checkSecondSat)
+                {
                   lcd.print("Second Sat ON");
-                } else {
+                }
+                else
+                {
                   lcd.print("Second Sat OFF");
                 }
                 vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -1105,12 +1400,15 @@ void keyPressTask(void *pvParameters) {
           case BACK:
             // todo: make it go to the item from where child was entered instead
             // of going to root of parent on pressing back
-            if (obj.currentMenuHasParent()) {
+            if (obj.currentMenuHasParent())
+            {
               obj.ascendToParentMenu();
               currentItem = obj.getCurrentItemCmdId();
               lcd.clear();
               printSelected();
-            } else {
+            }
+            else
+            {
               // root menu doesnt have parent, so can go inside this block only
               // if on root menu. go to home if back pressed on root.
               handleHome();
@@ -1134,32 +1432,41 @@ void keyPressTask(void *pvParameters) {
   vTaskDelete(NULL);
 }
 
-void alarmTask(void *pvParameters) {
+void alarmTask(void *pvParameters)
+{
   RtcDateTime now;
   int prevAlarmCheck = 0;
-  while (1) {
+  while (1)
+  {
     now = rtc.GetDateTime();
     // if midnight restart or call a function to load schedule. same logic as
     // done in setup()
 
-    if (schedFoundEeprom) {
+    if (schedFoundEeprom)
+    {
       // checking for 2nd saturday.
       if (checkSecondSat && now.Day() > 7 && now.Day() <= 14 &&
-          now.DayOfWeek() == 6) {
+          now.DayOfWeek() == 6)
+      {
         // DayOfWeek = 6 if Saturday.
         Serial.println("Second Saturday");
         vTaskDelay(60000 / portTICK_PERIOD_MS);
-      } else if (todayHoliday) {
+      }
+      else if (todayHoliday)
+      {
         // assigned holidays.
         Serial.println("Not checking today Holiday");
         vTaskDelay(60000 / portTICK_PERIOD_MS);
-      } else {
+      }
+      else
+      {
         Serial.printf("Checking for Schedule=%d, Bell=%d\n", activeSchedPtr->id,
                       activeBellCnt);
         Serial.printf("%d:%d\n", now.Hour(), now.Minute());
         prevAlarmCheck = millis();
         if (activeSchedPtr->bells[activeBellCnt].hour == now.Hour() &&
-            activeSchedPtr->bells[activeBellCnt].min == now.Minute()) {
+            activeSchedPtr->bells[activeBellCnt].min == now.Minute())
+        {
           myDFPlayer.play(activeSchedPtr->bells[activeBellCnt].file);
           Serial.printf("Playing Bell=%d File=%d\n", activeBellCnt,
                         activeSchedPtr->bells[activeBellCnt].file);
@@ -1173,7 +1480,8 @@ void alarmTask(void *pvParameters) {
 }
 /*--------------------freertos tasks--------------------*/
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   Serial.println("Starting");
 
@@ -1192,10 +1500,13 @@ void setup() {
   lcd.begin();
   lcd.backlight();
   lcdMutex = xSemaphoreCreateMutex();
-  if (lcdMutex == NULL) {
+  if (lcdMutex == NULL)
+  {
     Serial.println("Could not create mutex for lcdMutex");
     // TODO: how to heal this if occurs?
-  } else {
+  }
+  else
+  {
     Serial.println("Mutex Created");
   }
   createCustomCharacters();
@@ -1205,9 +1516,11 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(TTP229_SDO), keyChange, RISING);
   /*-------------df player------------*/
   mySoftwareSerial.begin(9600, SERIAL_8N1, 16, 17);
-  if (!myDFPlayer.begin(mySoftwareSerial)) {
+  if (!myDFPlayer.begin(mySoftwareSerial))
+  {
     Serial.println("DF Module Error");
-    while (1) {
+    while (1)
+    {
     }
   }
   Serial.println(F("DFPlayer Mini online."));
@@ -1219,25 +1532,33 @@ void setup() {
   /*---------rtc init------------*/
   rtc.Begin();
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-  if (!rtc.IsDateTimeValid()) {
-    if (rtc.LastError() != 0) {
+  if (!rtc.IsDateTimeValid())
+  {
+    if (rtc.LastError() != 0)
+    {
       Serial.print("RTC communicatins error= ");
       Serial.println(rtc.LastError());
-    } else {
+    }
+    else
+    {
       Serial.println("RTC lost confidence in date and time");
       rtc.SetDateTime(compiled);
     }
   }
-  if (!rtc.GetIsRunning()) {
+  if (!rtc.GetIsRunning())
+  {
     Serial.println("RTC was not actively running, starting now");
     rtc.SetIsRunning(true);
   }
 
   RtcDateTime now = rtc.GetDateTime();
-  if (now < compiled) {
+  if (now < compiled)
+  {
     Serial.println("rtc is older than compile time. Updating");
     rtc.SetDateTime(compiled); // NOTE: not updating date time
-  } else {
+  }
+  else
+  {
     Serial.println("rtc time same or newer than compile time");
   }
   rtc.Enable32kHzPin(false);
@@ -1251,25 +1572,20 @@ void setup() {
   int len = pref.getBytes(key.c_str(), &currentMode, sizeof(uint8_t));
   Serial.printf("Got %dbytes\n", len);
   Serial.printf("Active Mode = %d\n", currentMode);
-  if (currentMode == SUMMER) {
-    key = "modeSum";
-    len = pref.getBytes(key.c_str(), &summerSched, sizeof(ModeSched));
-    Serial.printf("Got %dbytes\n", len);
-    modeSchedIdx = summerSched.scheds[day];
-    Serial.printf("modeSchedIdx=%d\n", modeSchedIdx);
-  } else if (currentMode == WINTER) {
-    key = "modeWin";
-    len = pref.getBytes(key.c_str(), &winterSched, sizeof(ModeSched));
-    Serial.printf("Got %dbytes\n", len);
-    modeSchedIdx = winterSched.scheds[day];
-  } else if (currentMode == EXAM) {
-    key = "modeExam";
-    len = pref.getBytes(key.c_str(), &examSched, sizeof(ModeSched));
-    Serial.printf("Got %dbytes\n", len);
-    modeSchedIdx = examSched.scheds[day];
-  } else {
-    Serial.println("Invalid Mode");
-  }
+  /*removing conditions on active mode to get correct values of summerSched, winterSched... everytime.*/
+  key = "modeSum";
+  len = pref.getBytes(key.c_str(), &summerSched, sizeof(ModeSched));
+  Serial.printf("Got %dbytes\n", len);
+  modeSchedIdx = summerSched.scheds[day];
+  Serial.printf("modeSchedIdx=%d\n", modeSchedIdx);
+  key = "modeWin";
+  len = pref.getBytes(key.c_str(), &winterSched, sizeof(ModeSched));
+  Serial.printf("Got %dbytes\n", len);
+  modeSchedIdx = winterSched.scheds[day];
+  key = "modeExam";
+  len = pref.getBytes(key.c_str(), &examSched, sizeof(ModeSched));
+  Serial.printf("Got %dbytes\n", len);
+  modeSchedIdx = examSched.scheds[day];
   // got index of schedule to activate today.
   Serial.printf("modeSchedIdx=%d\n", modeSchedIdx);
   key = "p" + String(modeSchedIdx);
@@ -1281,9 +1597,12 @@ void setup() {
   Serial.printf("Bell key=%s\n", key.c_str());
   len = pref.getBytes(key.c_str(), &bellArr,
                       sizeof(Bell) * activeSchedule.bellCount);
-  if (len == 0) {
+  if (len == 0)
+  {
     Serial.println("No Schedule Stored");
-  } else {
+  }
+  else
+  {
     Serial.printf("Retrieved Bells &dBytes\n", len);
     schedFoundEeprom = true;
     activeBellCnt = 0;
@@ -1308,13 +1627,17 @@ void setup() {
   key = String(month) + String(day);
   uint8_t buf[3];
   len = pref.getBytes(key.c_str(), &buf, sizeof(buf));
-  if (len > 0) {
+  if (len > 0)
+  {
     Serial.println("Today is Holiday");
     todayHoliday = true;
-    if (pref.remove(key.c_str())) {
+    if (pref.remove(key.c_str()))
+    {
       Serial.println("Removed Today from Holiday List");
     }
-  } else {
+  }
+  else
+  {
     Serial.println("Today is not Holiday");
   }
   /*--------Alarm Task---------------*/
@@ -1325,15 +1648,20 @@ void setup() {
   xTaskCreate(keyPressTask, "keyPress", 4096, NULL, 3, NULL);
 }
 
-void loop() {
-  if (digitalRead(somePin)) {
+void loop()
+{
+  if (digitalRead(somePin))
+  {
     int mp3State = digitalRead(mp3busyPin);
-    if (mp3State == HIGH) {
+    if (mp3State == HIGH)
+    {
       digitalWrite(relayAmpPin, LOW);
       digitalWrite(relayMicPin, HIGH);
       digitalWrite(micActivatePin, HIGH);
       digitalWrite(errBuzPin, LOW);
-    } else {
+    }
+    else
+    {
       digitalWrite(relayAmpPin, LOW);
       digitalWrite(relayMicPin, LOW);
       digitalWrite(micActivatePin, LOW);
