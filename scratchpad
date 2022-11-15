@@ -67,3 +67,5 @@ Restart wherever required after changes like in schedule or today's active sched
 
 ----------ISSUES-------------
 pressing ZERO in getFile() irrespective of caller, will try to get sched info with current index.
+schedule in p1 not updating.
+In void setup() :1578 we dont check for active mode and retreive all data of ModeSched summer,winter,exam to have correct val when making changes or using it.
